@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" /> 
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <style>
+div.tooltip {	
+    position: absolute;			
+    text-align: left;			
+    width: 180px;					
+    height: 65px;					
+    padding: 5px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
+
+#csvdata, #kits {
+    width: 800px;
+    height: 55px;
+}
+
+div.hide {
+	display: none;
+}
+
+div.show {
+	display: block;
+}
+    </style>
+  </head>
+  <body>
+<h1>Chromosome Browser</h1>
+<div id="topdiv">
+<form id="myform">
+<label for="chr">Chromosome</label>
+<select id="chr">
+  <option value="0">All</option>
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+  <option value="8">8</option>
+  <option value="9">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
+  <option value="13">13</option>
+  <option value="14">14</option>
+  <option value="15">15</option>
+  <option value="16">16</option>
+  <option value="17">17</option>
+  <option value="18">18</option>
+  <option value="19">19</option>
+  <option value="20">20</option>
+  <option value="21">21</option>
+  <option value="22">22</option>
+</select>
+
+<label for="chr">View Type</label>
+<select id="viewtype" onchange="updateAll();">
+  <option value="compact" selected="selected">Compact</option>
+  <option value="kitsize">By Kit Size</option>
+  <option value="segment">By Segment</option>
+</select>
+
+<br/><br/>
+<label for="csvdata">CSV Data</label>
+<br/>
+<textarea name="csvdata" id="csvdata" onChange="loadData();updateAll();">
+</textarea>
+
+<br/><br/>
+<label for="kits">Only show these kits (one per line)</label>
+<br/>
+<textarea name="kits" id="kits" onChange="updateAll();">
+</textarea>
+
+</form>
+</div>
+
+<br/>
+
+<div id="chrbrowser">
+<div id="dchr1" class="hide"><h1>Chromosome 1</h1><svg id="chr1" width="1000"><rect id="rect1"/></svg></div>
+<div id="dchr2" class="hide"><h1>Chromosome 2</h1><svg id="chr2" width="1000"><rect id="rect2"/></svg></div>
+<div id="dchr3" class="hide"><h1>Chromosome 3</h1><svg id="chr3" width="1000"><rect id="rect3"/></svg></div>
+<div id="dchr4" class="hide"><h1>Chromosome 4</h1><svg id="chr4" width="1000"><rect id="rect4"/></svg></div>
+<div id="dchr5" class="hide"><h1>Chromosome 5</h1><svg id="chr5" width="1000"><rect id="rect5"/></svg></div>
+<div id="dchr6" class="hide"><h1>Chromosome 6</h1><svg id="chr6" width="1000"><rect id="rect6"/></svg></div>
+<div id="dchr7" class="hide"><h1>Chromosome 7</h1><svg id="chr7" width="1000"><rect id="rect7"/></svg></div>
+<div id="dchr8" class="hide"><h1>Chromosome 8</h1><svg id="chr8" width="1000"><rect id="rect8"/></svg></div>
+<div id="dchr9" class="hide"><h1>Chromosome 9</h1><svg id="chr9" width="1000"><rect id="rect9"/></svg></div>
+<div id="dchr10" class="hide"><h1>Chromosome 10</h1><svg id="chr10" width="1000"><rect id="rect10"/></svg></div>
+<div id="dchr11" class="hide"><h1>Chromosome 11</h1><svg id="chr11" width="1000"><rect id="rect11"/></svg></div>
+<div id="dchr12" class="hide"><h1>Chromosome 12</h1><svg id="chr12" width="1000"><rect id="rect12"/></svg></div>
+<div id="dchr13" class="hide"><h1>Chromosome 13</h1><svg id="chr13" width="1000"><rect id="rect13"/></svg></div>
+<div id="dchr14" class="hide"><h1>Chromosome 14</h1><svg id="chr14" width="1000"><rect id="rect14"/></svg></div>
+<div id="dchr15" class="hide"><h1>Chromosome 15</h1><svg id="chr15" width="1000"><rect id="rect15"/></svg></div>
+<div id="dchr16" class="hide"><h1>Chromosome 16</h1><svg id="chr16" width="1000"><rect id="rect16"/></svg></div>
+<div id="dchr17" class="hide"><h1>Chromosome 17</h1><svg id="chr17" width="1000"><rect id="rect17"/></svg></div>
+<div id="dchr18" class="hide"><h1>Chromosome 18</h1><svg id="chr18" width="1000"><rect id="rect18"/></svg></div>
+<div id="dchr19" class="hide"><h1>Chromosome 19</h1><svg id="chr19" width="1000"><rect id="rect19"/></svg></div>
+<div id="dchr20" class="hide"><h1>Chromosome 20</h1><svg id="chr20" width="1000"><rect id="rect20"/></svg></div>
+<div id="dchr21" class="hide"><h1>Chromosome 21</h1><svg id="chr21" width="1000"><rect id="rect21"/></svg></div>
+<div id="dchr22" class="hide"><h1>Chromosome 22</h1><svg id="chr22" width="1000"><rect id="rect22"/></svg></div>
+</div>
+
+    <script>
+"use strict;";
+
+var compareSegment = function (a, b) {
+	if (a.start < b.start) {
+		return -1;
+	} else if (a.start > b.start) {
+		return 1;
+	}
+
+	return 0;
+};
+
+function sortBySegment(data) {
+	var d = data.sort(compareSegment);
+	for (var i = 0; i < d.length; i++) {
+		d[i].row = i;
+	}
+
+	return [d, data.length];
+}
+
+function sortByKitSize(data) {
+	var kits = {};
+	var numRows = 0;
+
+	for (var i = 0; i < data.length; i++) {
+		if (data[i].kit in kits) {
+			kits[data[i].kit].total += data[i].cm;
+		} else {
+			kits[data[i].kit] = {
+				"total" : data[i].cm
+			};
+		}
+	}
+
+	var compareFunc = function (a, b) {
+		if (kits[a.kit].total < kits[b.kit].total) {
+			return 1;
+		} else if (kits[a.kit].total > kits[b.kit].total) {
+			return -1;
+		}
+		return -a.kit.localeCompare(b.kit);
+	}
+
+	var d = data.sort(compareFunc)
+		var currKit = d[0].kit;
+	var currRow = 0;
+	for (var i = 0; i < d.length; i++) {
+		if (currKit !== d[i].kit) {
+			currKit = d[i].kit;
+			currRow++;
+		}
+		d[i].row = currRow;
+
+		if (numRows < currRow + 1)
+			numRows = currRow + 1;
+	}
+
+	return [d, numRows];
+}
+
+function compact(data) {
+	var numRows = 1;
+
+	var sortByCM = function (a, b) {
+		if (a.cm < b.cm) {
+			return 1;
+		} else if (a.cm > b.cm) {
+			return -1;
+		}
+		return 0;
+	};
+
+	var d = data.sort(compareSegment);
+
+	function overlap(s1, s2) {
+		if (s1.row == s2.row) {
+			if ((s1.start <= s2.start && s2.start <= s1.end) ||
+				(s1.start <= s2.end && s2.end <= s1.end)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function overlapPrevious(segments, until) {
+		for (var i = 0; i < until; i++) {
+			if (overlap(segments[i], segments[until])) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	for (var i = 0; i < d.length; i++) {
+		var j = 0;
+		d[i].row = j;
+		while (j < i && overlapPrevious(d, i)) {
+			j++;
+			d[i].row = j;
+
+			if (numRows < j + 1)
+				numRows = j + 1;
+		}
+	}
+
+	return [d, numRows];
+}
+
+// Define the div for the tooltip
+var div = d3.select("body").append("div")
+	.attr("class", "tooltip")
+	.style("opacity", 0);
+
+var data = [];
+
+function loadData() {
+	var raw = document.getElementById('csvdata').value; // d3.select("#csvdata").text();
+	var d = d3.csvParse(raw, function (d, i) {
+			d.chr = +d.chr;
+			d.start = +d.start;
+			d.end = +d.end;
+			d.cm = +d.cm;
+
+			d.row = 0;
+			d.id = Math.random().toString(36);
+			return d;
+		});
+
+	for (var i=1; i<23; i++) {
+		data[i] = [].concat(d.filter(e => e.chr == i));
+	}
+}
+
+// https://en.wikipedia.org/wiki/Chromosome#Human_chromosomes
+const chrlen = [0, 247199719, 242751149, 199446827, 191263063, 180837866, 170896993, 158821424, 146274826, 140442298, 135374737, 134452384, 132289534, 114127980, 106360585, 100338915, 88822254, 78654742, 76117153, 63806651, 62435965, 46944323, 49528953];
+
+const width = 1400;
+
+function updateChr(data, chr, viewType, kits) {
+	if (chr < 1 || chr > 22) {
+		return;
+	}
+console.log(data);
+	var sc = d3.scaleLinear().domain([0, chrlen[chr]]).range([0, width]);
+	var d = data[chr];
+	if (kits.length > 0) {
+		d = d.filter(e => kits.includes(e.kit));
+	}
+	d = d.filter(e => e.chr == chr);
+
+	d3.select(`#dchr${chr}`).attr("class", d.length > 0 ? "show" : "hide");
+
+	switch (viewType) {
+	case "compact":
+		[d, numRows] = compact(d);
+		break;
+	case "kitsize":
+		[d, numRows] = sortByKitSize(d);
+		break;
+	case "segment":
+		[d, numRows] = sortBySegment(d);
+		break;
+	}
+
+	var container = d3.select(`#chr${chr}`).attr("width", width).attr("height", numRows * 21 + 4);
+	container.select(`#rect${chr}`).attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width).attr("height", 1 + numRows * (20 + 1)).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
+	// var rectGroup = container.append("g");
+	var rectangles = container.selectAll(".segment").data(d, function (d) {
+			return d.id
+		});
+
+	rectangles.exit().remove();
+
+	var rectangleAttributes = rectangles.enter().append("rect")
+		.attr("class", "segment")
+		.attr("x", function (d) {
+			return sc(d.start);
+		})
+		.attr("y", function (d, i) {
+			return 1 + d.row * 21;
+		})
+		.attr("rx", 4)
+		.attr("ry", 4)
+		.attr("width", function (d) {
+			return sc(d.end) - sc(d.start);
+		})
+		.attr("height", 20)
+		.style("fill", "grey")
+		.on("mouseover", function (d) {
+			div.transition()
+			.duration(200)
+			.style("opacity", 1.0);
+			div.html(d.start + " to " + d.end + "<br>kit " + d.kit + "<br>name " + d.name + "<br/>ThisCM " + d.cm)
+			.style("left", (d3.event.pageX) + "px")
+			.style("top", (d3.event.pageY - 28) + "px");
+			console.log(d.start + " to " + d.end + " kit [" + d.kit + "] name " + d.name);
+		})
+		.on("mouseout", function (d) {
+			div.transition()
+			.duration(500)
+			.style("opacity", 0);
+		});
+
+	rectangles
+	.transition()
+	.duration(400)
+	.attr("y", function (d, i) {
+		return 1 + d.row * 21;
+	});
+}
+
+function updateAll() {
+	var viewType = document.getElementById("viewtype").value;
+	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
+
+	for (var i = 1; i < 23; i++) {
+		updateChr(data, i, viewType, kits);
+	}
+}
+
+loadData();
+updateAll();
+</script>
+  </body>
+</html>
