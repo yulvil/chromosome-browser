@@ -17,17 +17,9 @@ div.tooltip {
     pointer-events: none;			
 }
 
-#csvdata, #kits {
+textarea {
     width: 800px;
     height: 55px;
-}
-
-div.hide {
-	display: none;
-}
-
-div.show {
-	display: block;
 }
     </style>
   </head>
@@ -35,9 +27,11 @@ div.show {
 <h1>Chromosome Browser</h1>
 <div id="topdiv">
 <form id="myform">
-<!--
+
+<div class="filters">
+
 <label for="chr">Chromosome</label>
-<select id="chr">
+<select id="chr" onChange="updateAll()">
   <option value="0">All</option>
   <option value="1">1</option>
   <option value="2">2</option>
@@ -61,9 +55,10 @@ div.show {
   <option value="20">20</option>
   <option value="21">21</option>
   <option value="22">22</option>
+  <option value="23">X</option>
 </select>
--->
 
+<br/><br/>
 <label for="chr">View Type</label>
 <select id="viewtype" onchange="updateAll();">
   <option value="compact" selected="selected">Compact</option>
@@ -71,7 +66,7 @@ div.show {
   <option value="segment">By Segment</option>
 </select>
 
-<br/>
+<br/><br/>
 <label for="minCm">Minimum CM size</label>
 <input id="minCm" type="number" value="5" onChange="updateAll();">
 
@@ -87,34 +82,21 @@ div.show {
 <textarea name="kits" id="kits" onChange="updateAll();">
 </textarea>
 
+<br/><br/>
+<label for="excludekits">Exclude these kits (one per line)</label>
+<br/>
+<textarea name="excludekits" id="excludekits" onChange="updateAll();">
+</textarea>
+
 </form>
 </div>
 
 <br/>
 
+</div>
+
 <div id="chrbrowser">
-<div id="dchr1" class="hide"><h1>Chromosome 1</h1><svg id="chr1" width="1000"><rect id="rect1"/></svg></div>
-<div id="dchr2" class="hide"><h1>Chromosome 2</h1><svg id="chr2" width="1000"><rect id="rect2"/></svg></div>
-<div id="dchr3" class="hide"><h1>Chromosome 3</h1><svg id="chr3" width="1000"><rect id="rect3"/></svg></div>
-<div id="dchr4" class="hide"><h1>Chromosome 4</h1><svg id="chr4" width="1000"><rect id="rect4"/></svg></div>
-<div id="dchr5" class="hide"><h1>Chromosome 5</h1><svg id="chr5" width="1000"><rect id="rect5"/></svg></div>
-<div id="dchr6" class="hide"><h1>Chromosome 6</h1><svg id="chr6" width="1000"><rect id="rect6"/></svg></div>
-<div id="dchr7" class="hide"><h1>Chromosome 7</h1><svg id="chr7" width="1000"><rect id="rect7"/></svg></div>
-<div id="dchr8" class="hide"><h1>Chromosome 8</h1><svg id="chr8" width="1000"><rect id="rect8"/></svg></div>
-<div id="dchr9" class="hide"><h1>Chromosome 9</h1><svg id="chr9" width="1000"><rect id="rect9"/></svg></div>
-<div id="dchr10" class="hide"><h1>Chromosome 10</h1><svg id="chr10" width="1000"><rect id="rect10"/></svg></div>
-<div id="dchr11" class="hide"><h1>Chromosome 11</h1><svg id="chr11" width="1000"><rect id="rect11"/></svg></div>
-<div id="dchr12" class="hide"><h1>Chromosome 12</h1><svg id="chr12" width="1000"><rect id="rect12"/></svg></div>
-<div id="dchr13" class="hide"><h1>Chromosome 13</h1><svg id="chr13" width="1000"><rect id="rect13"/></svg></div>
-<div id="dchr14" class="hide"><h1>Chromosome 14</h1><svg id="chr14" width="1000"><rect id="rect14"/></svg></div>
-<div id="dchr15" class="hide"><h1>Chromosome 15</h1><svg id="chr15" width="1000"><rect id="rect15"/></svg></div>
-<div id="dchr16" class="hide"><h1>Chromosome 16</h1><svg id="chr16" width="1000"><rect id="rect16"/></svg></div>
-<div id="dchr17" class="hide"><h1>Chromosome 17</h1><svg id="chr17" width="1000"><rect id="rect17"/></svg></div>
-<div id="dchr18" class="hide"><h1>Chromosome 18</h1><svg id="chr18" width="1000"><rect id="rect18"/></svg></div>
-<div id="dchr19" class="hide"><h1>Chromosome 19</h1><svg id="chr19" width="1000"><rect id="rect19"/></svg></div>
-<div id="dchr20" class="hide"><h1>Chromosome 20</h1><svg id="chr20" width="1000"><rect id="rect20"/></svg></div>
-<div id="dchr21" class="hide"><h1>Chromosome 21</h1><svg id="chr21" width="1000"><rect id="rect21"/></svg></div>
-<div id="dchr22" class="hide"><h1>Chromosome 22</h1><svg id="chr22" width="1000"><rect id="rect22"/></svg></div>
+<svg id="topsvg" width="100%"/>
 </div>
 
     <script>
@@ -231,63 +213,102 @@ var div = d3.select("body").append("div")
 
 var data = [];
 
+function remapChr(chr) {
+	return (chr == 'X') ? 23 : +chr;
+}
+
 function loadData() {
+	data = [];
 	var raw = document.getElementById('csvdata').value; // d3.select("#csvdata").text();
 	var d = d3.csvParse(raw, function (d, i) {
-		var o = {};
-			o.chr = (+d.chr || 0) + (+d["CHROMOSOME"] || 0);
-			o.start = (+d.start || 0) + (+d["START LOCATION"] || 0);
-			o.end = (+d.end || 0) + (+d["END LOCATION"] || 0);
-			o.cm = (+d.cm || 0) + (+d["CENTIMORGANS"] || 0);
-			o.name = (d.name || "") + (d["MATCHNAME"] || "")
-			o.kit = (d.kit || o.name)
+			d.chr = remapChr(d.chr || d["CHROMOSOME"]);
+			d.start = (+d.start || 0) + (+d["START LOCATION"] || 0);
+			d.end = (+d.end || 0) + (+d["END LOCATION"] || 0);
+			d.cm = (+d.cm || 0) + (+d["CENTIMORGANS"] || 0);
+			d.name = (d.name || "") + (d["MATCHNAME"] || "")
+			d.kit = (d.kit || d.name)
 
-			o.row = 0;
-			o.id = Math.random().toString(36);
-			return o;
+			d.row = 0;
+			d.id = Math.random().toString(36);
+			return d;
 		});
 
-	for (var i=1; i<23; i++) {
-		data[i] = [].concat(d.filter(e => e.chr == i));
+	for (var i = 1; i <= 23; i++) {
+		var dd = d.filter(e => e.chr == i);
+		if (dd.length > 0) {
+			data.push({
+				"chr" : i,
+				"segments" : dd
+			});
+		}
 	}
 }
 
 // https://en.wikipedia.org/wiki/Chromosome#Human_chromosomes
-const chrlen = [0, 247199719, 242751149, 199446827, 191263063, 180837866, 170896993, 158821424, 146274826, 140442298, 135374737, 134452384, 132289534, 114127980, 106360585, 100338915, 88822254, 78654742, 76117153, 63806651, 62435965, 46944323, 49528953];
+const chrlen = [0, 247199719, 242751149, 199446827, 191263063, 180837866, 170896993, 158821424, 146274826, 140442298, 135374737, 134452384, 132289534, 114127980, 106360585, 100338915, 88822254, 78654742, 76117153, 63806651, 62435965, 46944323, 49528953, 154913754];
 
-const width = 1400;
+function filterData(data, kits, excludekits, minCm, chr) {
+	var resp = [];
 
-function updateChr(data, chr, viewType, kits, minCm) {
-	if (chr < 1 || chr > 22) {
-		return;
+	for (var i = 0; i < data.length; i++) {
+
+		// filter chromosomes
+		if (chr > 0 && data[i].chr !== chr) {
+			continue;
+		}
+
+		var d = data[i].segments;
+		if (d.length > 0 && kits.length > 0) {
+			d = d.filter(e => kits.includes(e.kit));
+		}
+
+		if (d.length > 0 && excludekits.length > 0) {
+			d = d.filter(e => !excludekits.includes(e.kit));
+		}
+
+		if (d.length > 0) {
+			d = d.filter(e => e.cm >= minCm);
+		}
+		if (d.length > 0) {
+			resp.push({
+				"chr" : data[i].chr,
+				"segments" : d
+			});
+		}
 	}
 
-	var sc = d3.scaleLinear().domain([0, chrlen[chr]]).range([0, width]);
-	var d = data[chr];
-	if (kits.length > 0) {
-		d = d.filter(e => kits.includes(e.kit));
+	return resp;
+}
+
+function sortData(data, viewType) {
+	for (var i = 0; i < data.length; i++) {
+		switch (viewType) {
+		case "compact":
+			[d, numRows] = compact(data[i].segments);
+			break;
+		case "kitsize":
+			[d, numRows] = sortByKitSize(data[i].segments);
+			break;
+		case "segment":
+			[d, numRows] = sortBySegment(data[i].segments);
+			break;
+		}
+
+		data[i].segments = d;
+		data[i].numRows = numRows;
 	}
-	//d = d.filter(e => e.chr == chr);
-	d = d.filter(e => e.cm >= minCm);
 
-	d3.select(`#dchr${chr}`).attr("class", d.length > 0 ? "show" : "hide");
+	return data;
+}
 
-	switch (viewType) {
-	case "compact":
-		[d, numRows] = compact(d);
-		break;
-	case "kitsize":
-		[d, numRows] = sortByKitSize(d);
-		break;
-	case "segment":
-		[d, numRows] = sortBySegment(d);
-		break;
-	}
+var width = 1400;
 
-	var container = d3.select(`#chr${chr}`).attr("width", width).attr("height", numRows * 21 + 4);
-	container.select(`#rect${chr}`).attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width).attr("height", 1 + numRows * (20 + 1)).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
-	// var rectGroup = container.append("g");
-	var rectangles = container.selectAll(".segment").data(d, function (d) {
+function updateChr(e) {
+	var chrSvg = d3.select(`#chrsvg${e.chr}`);
+
+	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([30, width]);
+
+	var rectangles = chrSvg.selectAll(".segment").data(e.segments, function (d) {
 			return d.id
 		});
 
@@ -329,19 +350,60 @@ function updateChr(data, chr, viewType, kits, minCm) {
 	.attr("y", function (d, i) {
 		return 1 + d.row * 21;
 	});
+
+	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (20 + 1))
 }
 
 function updateAll() {
 	var viewType = document.getElementById("viewtype").value;
 	var minCm = document.getElementById("minCm").value || 5;
 	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
+	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
+	var chr = +document.getElementById("chr").value;
 
-	for (var i = 1; i < 23; i++) {
-		updateChr(data, i, viewType, kits, minCm);
+	var d = filterData(data, kits, excludekits, minCm, chr);
+	d = sortData(d, viewType);
+
+	var topSvg = d3.select("#topsvg");
+	var chrUpdate = topSvg.selectAll("svg").data(d, function (d) {
+			return d.chr
+		});
+	var chrEnter = chrUpdate.enter();
+	var chrSvg = chrEnter.append("svg").attr("id", function (d) {
+			return `chrsvg${d.chr}`
+		}).attr("width", "95%");
+	chrSvg.append("text").attr("x", 20).attr("y", 15).attr("class", "chrlabel").attr("font-family", "Verdana").attr("font-size", 15).attr("font-weight", "700").attr("text-anchor", "end").attr("fill", "grey").text(function (d) {
+		return d.chr == 23 ? 'X' : `${d.chr}`
+	});
+	chrSvg.append("rect").attr("id", function (d) {
+		return `chrrect${d.chr}`
+	}).attr("class", "chrbox").attr("x", 30).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width - 30).attr("height", function (d, i) {
+		return 1 + d.numRows * (20 + 1)
+	}).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
+
+	chrUpdate.exit().remove();
+
+	chrUpdate.attr("height", function (d) {
+		return 1 + d.numRows * (20 + 1)
+	});
+
+	d.forEach(function (e) {
+		updateChr(e)
+	});
+
+	var y = 0;
+	for (var i = 0; i < d.length; i++) {
+		var node = d3.select(`#chrsvg${d[i].chr}`);
+		node.attr("y", y);
+		y += 1 + d[i].numRows * (20 + 1) + 15;
 	}
+
+	d3.select(`#topsvg`).attr("height", y);
+
 }
 
 loadData();
+
 updateAll();
 </script>
   </body>
