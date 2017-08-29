@@ -2,7 +2,8 @@
 A chromosome browser that displays csv data (gedmatch, ftdna) in a SVG
 
 Features
-* Import CSV data
+* Copy/paste your CSV data (gedmatch, familytreedna)
+* All the rendering is done on the client side. No data sent to servers.
 * Filter by centimorgan (cM)
 * Include or exclude kits (persons)
 * Different views (compact, by kit, ordered by segment)
