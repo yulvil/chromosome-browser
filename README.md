@@ -21,3 +21,8 @@ familytreedna.com export format
 ```
 NAME,MATCHNAME,CHROMOSOME,START LOCATION,END LOCATION,CENTIMORGANS,MATCHING SNPS
 ```
+
+To export the data
+* Log into your familytreedna.com account
+* Open the Family Finder - Chromosome Browser
+* Click on `Download All Matches to Excel (CSV Format)`
