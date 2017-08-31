@@ -1,6 +1,8 @@
 # chromosome-browser
 A chromosome browser that displays csv data (gedmatch, ftdna) in a SVG
 
+**Try it**: https://yulvil.github.io/chromosome-browser.html
+
 Features
 * Copy/paste your CSV data (gedmatch, familytreedna)
 * All the rendering is done on the client side. No data sent to servers.
