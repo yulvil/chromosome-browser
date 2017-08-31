@@ -28,3 +28,7 @@ To export the data
 * Log into your familytreedna.com account
 * Open the Family Finder - Chromosome Browser
 * Click on `Download All Matches to Excel (CSV Format)`
+
+TODO:
+* Make it pretty
+* Fix performance problem with Compact view and cM<5
