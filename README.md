@@ -29,9 +29,13 @@ To export the data
 * Open the Family Finder - Chromosome Browser
 * Click on `Download All Matches to Excel (CSV Format)`
 
-### TODO
+## TODO
 * Sort by cM
 * Make it pretty
 * Fix performance problem with Compact view and cM<5
 * Improve screen resize
 * Improve mobile usability
+
+## Screenshot
+
+![Chromosome 1 Compact View](screenshot.png?raw=true "Chromosome 1 Compact View")
