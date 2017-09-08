@@ -301,12 +301,12 @@ function sortData(data, viewType) {
 	return data;
 }
 
-var width = 1400;
+var width = 2000;
 
 function updateChr(e) {
-	var chrSvg = d3.select(`#chrsvg${e.chr}`);
+	var chrSvg = d3.select(`#chrg${e.chr}`);
 
-	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([30, width]);
+	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, width]);
 
 	var rectangles = chrSvg.selectAll(".segment").data(e.segments, function (d) {
 			return d.id
@@ -371,13 +371,16 @@ function updateAll() {
 	var chrEnter = chrUpdate.enter();
 	var chrSvg = chrEnter.append("svg").attr("id", function (d) {
 			return `chrsvg${d.chr}`
-		}).attr("width", "95%");
+		}).attr("width", "100%");
 	chrSvg.append("text").attr("x", 20).attr("y", 15).attr("class", "chrlabel").attr("font-family", "Verdana").attr("font-size", 15).attr("font-weight", "700").attr("text-anchor", "end").attr("fill", "grey").text(function (d) {
 		return d.chr == 23 ? 'X' : `${d.chr}`
 	});
-	chrSvg.append("rect").attr("id", function (d) {
+	var g = chrSvg.append("g").attr("transform", "translate(30)").attr("id", function (d) {
+			return `chrg${d.chr}`
+		});
+	g.append("rect").attr("id", function (d) {
 		return `chrrect${d.chr}`
-	}).attr("class", "chrbox").attr("x", 30).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width - 30).attr("height", function (d, i) {
+	}).attr("class", "chrbox").attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width).attr("height", function (d, i) {
 		return 1 + d.numRows * (20 + 1)
 	}).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
 
@@ -398,7 +401,7 @@ function updateAll() {
 		y += 1 + d[i].numRows * (20 + 1) + 15;
 	}
 
-	d3.select(`#topsvg`).attr("height", y);
+	d3.select(`#topsvg`).attr("height", y).attr("viewBox", `0 0 ${width + 50} ${y}`).attr("preserveAspectRatio", "none");
 
 }
 
