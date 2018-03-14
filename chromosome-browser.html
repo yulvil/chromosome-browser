@@ -21,12 +21,31 @@ textarea {
     width: 800px;
     height: 55px;
 }
+
+#drop_zone {
+	border: 2px dashed #000;
+    width:  220px;
+	float: left;
+	text-align: center;
+}
+
+input[type=number]{
+    width: 70px;
+	font-size: 16px;
+	text-align: center;
+	font-weight: bold;
+}
+
+#csvdiv0 {
+	display: none;
+}
+
     </style>
   </head>
   <body>
 <h1>Chromosome Browser</h1>
 <div id="topdiv">
-<form id="myform">
+<form id="myform" onsubmit="return false;">
 
 <div class="filters">
 
@@ -67,14 +86,33 @@ textarea {
 </select>
 
 <br/><br/>
-<label for="minCm">Minimum CM size</label>
-<input id="minCm" type="number" value="5" onChange="updateAll();">
+<label for="minCm">Centimorgan size</label>
+from <input id="minCm" type="number" value="5" onChange="updateAll();">
+to <input id="maxCm" type="number" value="" onChange="updateAll();">
 
 <br/><br/>
-<label for="csvdata">CSV Data</label>
-<br/>
-<textarea name="csvdata" id="csvdata" onChange="loadData();updateAll();">
-</textarea>
+<div style="width: 100%; overflow: hidden;">
+
+<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+  <p>&#128193; Drag one or more files here</p>
+</div>
+
+<div style="float: left;">
+  <p>&nbsp;or&nbsp;
+  <input type="button" name="addCsv" id="addCsv" value="Add CSV data" onclick="addCsvInput();" />
+  </p>
+</div>
+</div>
+
+<div id="csvdatadiv">
+  <div id="csvdiv0">
+    <br/><br/>
+    <label for="csvdata0">CSV Data</label>
+    <br/>
+    <textarea name="csvdata0" id="csvdata0" onChange="loadData();updateAll();">
+    </textarea>
+  </div>
+</div>
 
 <br/><br/>
 <label for="kits">Only show these kits (one per line)</label>
@@ -217,21 +255,57 @@ function remapChr(chr) {
 	return (chr == 'X') ? 23 : +chr;
 }
 
+var kits = {};
+
+function colors(s) {
+	return s.match(/.{6}/g).map(function (x) {
+		return "#" + x;
+	});
+}
+
+// var category20 = colors("1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5");
+
+var cat10 = d3.scaleOrdinal(d3.schemeCategory20);
+function getColorForKit(d) {
+	if (kits[d.kit]) {
+		return kits[d.kit].color;
+	} else {
+		var c = cat10(d.kit);
+		kits[d.kit] = {
+			"color" : c
+		};
+		return c;
+	}
+}
+
+function csvParse(text) {
+	return d3.csvParse(text, function (d, i) {
+		d.chr = remapChr(d.chr || d["CHROMOSOME"] || d["Chromosome"]);
+		d.start = (+d.start || 0) + (+d["START LOCATION"] || 0) + (+d["Start Location"] || 0);
+		d.end = (+d.end || 0) + (+d["END LOCATION"] || 0) + (+d["End Location"] || 0);
+		d.cm = (+d.cm || 0) + (+d["CENTIMORGANS"] || 0) + (+d["Centimorgans"] || 0);
+		d.name = (d.name || "") + (d["MATCHNAME"] || "") + (d["Match name"] || "");
+		d.kit = (d.kit || d.name);
+
+		d.row = 0;
+		d.id = Math.random().toString(36);
+		if (!d.color) {
+			d.color = getColorForKit(d);
+		}
+		return d;
+	});
+}
+
 function loadData() {
 	data = [];
-	var raw = document.getElementById('csvdata').value; // d3.select("#csvdata").text();
-	var d = d3.csvParse(raw, function (d, i) {
-			d.chr = remapChr(d.chr || d["CHROMOSOME"]);
-			d.start = (+d.start || 0) + (+d["START LOCATION"] || 0);
-			d.end = (+d.end || 0) + (+d["END LOCATION"] || 0);
-			d.cm = (+d.cm || 0) + (+d["CENTIMORGANS"] || 0);
-			d.name = (d.name || "") + (d["MATCHNAME"] || "")
-			d.kit = (d.kit || d.name)
 
-			d.row = 0;
-			d.id = Math.random().toString(36);
-			return d;
-		});
+	let d = [];
+
+	let div = document.getElementById("csvdatadiv");
+	for (var i = 1; i < div.children.length; i++) {
+		var raw = document.getElementById('csvdata' + i).value;
+		d = d.concat(csvParse(raw));
+	}
 
 	for (var i = 1; i <= 23; i++) {
 		var dd = d.filter(e => e.chr == i);
@@ -247,7 +321,7 @@ function loadData() {
 // https://en.wikipedia.org/wiki/Chromosome#Human_chromosomes
 const chrlen = [0, 247199719, 242751149, 199446827, 191263063, 180837866, 170896993, 158821424, 146274826, 140442298, 135374737, 134452384, 132289534, 114127980, 106360585, 100338915, 88822254, 78654742, 76117153, 63806651, 62435965, 46944323, 49528953, 154913754];
 
-function filterData(data, kits, excludekits, minCm, chr) {
+function filterData(data, kits, excludekits, minCm, maxCm, chr) {
 	var resp = [];
 
 	for (var i = 0; i < data.length; i++) {
@@ -268,6 +342,9 @@ function filterData(data, kits, excludekits, minCm, chr) {
 
 		if (d.length > 0) {
 			d = d.filter(e => e.cm >= minCm);
+		}
+		if (d.length > 0) {
+			d = d.filter(e => e.cm <= maxCm);
 		}
 		if (d.length > 0) {
 			resp.push({
@@ -328,7 +405,9 @@ function updateChr(e) {
 			return sc(d.end) - sc(d.start);
 		})
 		.attr("height", 20)
-		.style("fill", "grey")
+		.style("fill", function (d) {
+			return d.color;
+		})
 		.on("mouseover", function (d) {
 			div.transition()
 			.duration(200)
@@ -357,11 +436,12 @@ function updateChr(e) {
 function updateAll() {
 	var viewType = document.getElementById("viewtype").value;
 	var minCm = document.getElementById("minCm").value || 5;
+	var maxCm = document.getElementById("maxCm").value || 1000;
 	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
 	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
 	var chr = +document.getElementById("chr").value;
 
-	var d = filterData(data, kits, excludekits, minCm, chr);
+	var d = filterData(data, kits, excludekits, minCm, maxCm, chr);
 	d = sortData(d, viewType);
 
 	var topSvg = d3.select("#topsvg");
@@ -405,11 +485,68 @@ function updateAll() {
 
 }
 
+function dragOverHandler(ev) {
+	// Prevent default behavior (Prevent file from being opened)
+	ev.preventDefault();
+}
+
+function dropHandler(ev) {
+	// Prevent default behavior (Prevent file from being opened)
+	ev.preventDefault();
+
+	if (ev.dataTransfer.items) {
+		// Use DataTransferItemList interface to access the file(s)
+		for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+			// If dropped items aren't files, reject them
+			if (ev.dataTransfer.items[i].kind === 'file') {
+				var file = ev.dataTransfer.items[i].getAsFile();
+				let reader = new FileReader()
+					reader.readAsText(file)
+					reader.onloadend = function () {
+					addCsvInput().value = reader.result;
+					loadData();
+					updateAll();
+				}
+			}
+		}
+	} else {
+		// Use DataTransfer interface to access the file(s)
+		for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+			// console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+		}
+	}
+
+	// Pass event to removeDragData for cleanup
+	removeDragData(ev)
+}
+
+function removeDragData(ev) {
+	if (ev.dataTransfer.items) {
+		// Use DataTransferItemList interface to remove the drag data
+		ev.dataTransfer.items.clear();
+	} else {
+		// Use DataTransfer interface to remove the drag data
+		ev.dataTransfer.clearData();
+	}
+}
+
+function addCsvInput() {
+	var div = document.getElementById("csvdatadiv");
+	var num = div.children.length;
+	var node = document.getElementById("csvdiv0").cloneNode(true);
+	node.id = "csvdiv" + num;
+	node.children[2].htmlFor = "csvdata" + num;
+	node.children[4].id = "csvdata" + num;
+	node.children[4].name = "csvdata" + num;
+	div.appendChild(node);
+	return node.children[4];
+}
+
 loadData();
 
 updateAll();
 </script>
 
-Copyright (c) 2017 yulvil <a href="https://github.com/yulvil/chromosome-browser">github Source</a>
+Copyright (c) 2018 yulvil <a href="https://github.com/yulvil/chromosome-browser">Help</a> and <a href="https://github.com/yulvil/chromosome-browser">Source Code</a>
 	</body>
 </html>
