@@ -1,10 +1,11 @@
 # chromosome-browser
-A chromosome browser that displays csv data (gedmatch, ftdna) in a SVG
+A chromosome browser that displays csv data (gedmatch, ftdna, myheritage) in a SVG
 
 **Try it**: https://yulvil.github.io/chromosome-browser.html
 
 Features
-* Copy/paste your CSV data (gedmatch, familytreedna)
+* Copy/paste your CSV data (gedmatch, familytreedna, myheritage)
+* Drag and drop CSV files from your desktop
 * All the rendering is done on the client side. No data sent to servers.
 * Filter by centimorgan (cM)
 * Include or exclude kits (persons)
@@ -19,15 +20,25 @@ Formats supported are
 1,92017,13771690,9.9,"DEF456","Alice Bob"
 ```
 
-familytreedna.com export format
+familytreedna.com segments file format
 ```
 NAME,MATCHNAME,CHROMOSOME,START LOCATION,END LOCATION,CENTIMORGANS,MATCHING SNPS
 ```
 
-To export the data
-* Log into your familytreedna.com account
+myheritage.com segments file format
+```
+Name,"Match name",Chromosome,"Start Location","End Location","Start RSID","End RSID",Centimorgans,SNPs
+```
+
+To export your segment data (familytreedna.com)
+* Sign in to familytreedna.com
 * Open the Family Finder - Chromosome Browser
 * Click on `Download All Matches to Excel (CSV Format)`
+
+To export your segment data (myheritage.com)
+* Sign in to myheritage.com
+* Open the DNA - DNA matches
+* Click on `Export shared DNA segment info for all DNA matches`
 
 ## TODO
 * Sort by cM
