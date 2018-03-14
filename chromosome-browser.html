@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" /> 
+    <meta charset="utf-8" />
+	<title>Yulvil Chromosome Browser</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <style>
-div.tooltip {	
-    position: absolute;			
-    text-align: left;			
-    width: 180px;					
-    height: 65px;					
-    padding: 5px;				
-    font: 12px sans-serif;		
-    background: lightsteelblue;	
-    border: 0px;		
-    border-radius: 8px;			
-    pointer-events: none;			
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    // width: 180px;
+    // height: 65px;
+    padding: 10px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
 }
 
 textarea {
@@ -43,7 +44,7 @@ input[type=number]{
     </style>
   </head>
   <body>
-<h1>Chromosome Browser</h1>
+<h1>Yulvil Chromosome Browser</h1>
 <div id="topdiv">
 <form id="myform" onsubmit="return false;">
 
@@ -433,10 +434,14 @@ function updateChr(e) {
 			return d.color;
 		})
 		.on("mouseover", function (d) {
+			name = "";
+			if (d.name !== d.kit) {
+				name = "<br>name " + d.name;
+			}
 			div.transition()
 			.duration(200)
 			.style("opacity", 1.0);
-			div.html(d.start + " to " + d.end + "<br>kit " + d.kit + "<br>name " + d.name + "<br/>ThisCM " + d.cm)
+			div.html(d.start + " to " + d.end + "<br>kit " + d.kit + name + "<br/>This segment " + d.cm + " cM")
 			.style("left", (d3.event.pageX) + "px")
 			.style("top", (d3.event.pageY - 28) + "px");
 			console.log(d.start + " to " + d.end + " kit [" + d.kit + "] name " + d.name);
