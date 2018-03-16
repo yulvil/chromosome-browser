@@ -466,23 +466,21 @@ function updateChr(e, chrsize) {
 		});
 
 	rectangles
-		.attr("x", function (d) {
-			return sc(d.start);
-		})
-		.attr("y", function (d, i) {
-			return 1 + d.row * (segmentHeight + 1);
-		})
-		.attr("width", function (d) {
-			return sc(d.end) - sc(d.start);
-		})
-		.attr("height", segmentHeight)
-
-	rectangles
 	.transition()
 	.duration(400)
+	.attr("x", function (d) {
+		return sc(d.start);
+	})
 	.attr("y", function (d, i) {
 		return 1 + d.row * (segmentHeight + 1);
-	});
+	})
+	.attr("width", function (d) {
+		return sc(d.end) - sc(d.start);
+	})
+	.attr("height", segmentHeight)
+	.style("fill", function (d) {
+		return d.color;
+	})
 
 	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (segmentHeight + 1))
 }
