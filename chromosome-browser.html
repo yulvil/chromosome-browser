@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-	<title>Yulvil Chromosome Browser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Yulvil Chromosome Browser</title>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <style>
 div.tooltip {
@@ -78,14 +79,14 @@ input[type=number]{
 
 <br/><br/>
 <label for="chrsize">Chromosome Size</label>
-<select id="chrsize" onchange="updateAll();">
+<select id="chrsize" onchange="updateDisplay();">
   <option value="screenwidth" selected="selected">screen width</option>
   <option value="proportional">proportional</option>
 </select>
 
 <br/><br/>
 <label for="chr">View Type</label>
-<select id="viewtype" onchange="updateAll();">
+<select id="viewtype" onchange="updateDisplay();">
   <option value="compact" selected="selected">Compact</option>
   <option value="compactreverse">Compact (reverse)</option>
   <option value="segment">By Segment</option>
@@ -100,7 +101,7 @@ to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="upd
 
 <br/><br/>
 <label for="segmentHeight">Segment Height</label>
-<input id="segmentHeight" type="number" value="10" onChange="updateAll();" onInput="updateAll();">
+<input id="segmentHeight" type="number" value="10" onChange="updateDisplay();" onInput="updateAll();">
 
 <br/><br/>
 <div style="width: 100%; overflow: hidden;">
@@ -202,7 +203,7 @@ function sortByKitSize(data) {
 			kits[data[i].kit].total += data[i].cm;
 		} else {
 			kits[data[i].kit] = {
-				"total" : data[i].cm
+				"total": data[i].cm
 			};
 		}
 	}
@@ -278,6 +279,7 @@ var div = d3.select("body").append("div")
 	.style("opacity", 0);
 
 var data = [];
+var filteredData = [];
 
 function remapChr(chr) {
 	return (chr == 'X') ? 23 : +chr;
@@ -300,7 +302,7 @@ function getColorForKit(d) {
 	} else {
 		var c = cat10(d.kit);
 		kits[d.kit] = {
-			"color" : c
+			"color": c
 		};
 		return c;
 	}
@@ -326,10 +328,11 @@ function csvParse(text) {
 
 function loadData() {
 	data = [];
+	filteredData = [];
 
-	let d = [];
+	var d = [];
 
-	let div = document.getElementById("csvdatadiv");
+	var div = document.getElementById("csvdatadiv");
 	for (var i = 1; i < div.children.length; i++) {
 		var raw = document.getElementById('csvdata' + i).value;
 		d = d.concat(csvParse(raw));
@@ -339,8 +342,8 @@ function loadData() {
 		var dd = d.filter(e => e.chr == i);
 		if (dd.length > 0) {
 			data.push({
-				"chr" : i,
-				"segments" : dd
+				"chr": i,
+				"segments": dd
 			});
 		}
 	}
@@ -376,8 +379,8 @@ function filterData(data, kits, excludekits, minCm, maxCm, chr) {
 		}
 		if (d.length > 0) {
 			resp.push({
-				"chr" : data[i].chr,
-				"segments" : d
+				"chr": data[i].chr,
+				"segments": d
 			});
 		}
 	}
@@ -417,10 +420,7 @@ var width = window.innerWidth || document.width;
 function updateChr(e, chrsize) {
 	var chrSvg = d3.select(`#chrg${e.chr}`);
 	var segmentHeight = +document.getElementById("segmentHeight").value;
-	// var chrsize = document.getElementById("chrsize").value;
-	// console.log(chrsize);
 
-	// var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, width]);
 	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, chrsize]);
 
 	var rectangles = chrSvg.selectAll(".segment").data(e.segments, function (d) {
@@ -478,35 +478,30 @@ function updateChr(e, chrsize) {
 		return sc(d.end) - sc(d.start);
 	})
 	.attr("height", segmentHeight)
-	.style("fill", function (d) {
-		return d.color;
-	})
 
 	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (segmentHeight + 1))
 }
 
 function getChrBoxWidth(chr, chrsize) {
 	if (chrsize === 'proportional') {
-	console.log('proportional');
 		return width * chrlen[chr] / chrlen[1];
 	}
 
-	console.log('screenwidth');
 	return width;
 }
 
 function updateAll() {
+	updateData()
+	updateDisplay()
+}
+
+function updateDisplay() {
 	var viewType = document.getElementById("viewtype").value;
-	var minCm = document.getElementById("minCm").value || 5;
-	var maxCm = document.getElementById("maxCm").value || 1000;
-	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
-	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
 	var chr = +document.getElementById("chr").value;
 	var segmentHeight = +document.getElementById("segmentHeight").value;
 	var chrsize = document.getElementById("chrsize").value;
 
-	var d = filterData(data, kits, excludekits, minCm, maxCm, chr);
-	d = sortData(d, viewType);
+	var d = sortData(filteredData, viewType);
 
 	var topSvg = d3.select("#topsvg");
 	var chrUpdate = topSvg.selectAll("svg").data(d, function (d) {
@@ -534,7 +529,9 @@ function updateAll() {
 	}).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
 
 	var chrBoxUpdate = d3.selectAll(".chrbox");
-	chrBoxUpdate.attr("width", function (d) { return getChrBoxWidth(d.chr, chrsize) });
+	chrBoxUpdate.attr("width", function (d) {
+		return getChrBoxWidth(d.chr, chrsize)
+	});
 
 	chrUpdate.attr("height", function (d) {
 		return 1 + d.numRows * (segmentHeight + 1)
@@ -552,7 +549,16 @@ function updateAll() {
 	}
 
 	d3.select(`#topsvg`).attr("height", y).attr("viewBox", `0 0 ${width + 50} ${y}`).attr("preserveAspectRatio", "none");
+}
 
+function updateData() {
+	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
+	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
+	var minCm = document.getElementById("minCm").value || 5;
+	var maxCm = document.getElementById("maxCm").value || 1000;
+	var chr = +document.getElementById("chr").value;
+
+	filteredData = filterData(data, kits, excludekits, minCm, maxCm, chr);
 }
 
 function dragOverHandler(ev) {
@@ -570,7 +576,7 @@ function dropHandler(ev) {
 			// If dropped items aren't files, reject them
 			if (ev.dataTransfer.items[i].kind === 'file') {
 				var file = ev.dataTransfer.items[i].getAsFile();
-				let reader = new FileReader()
+				var reader = new FileReader()
 					reader.readAsText(file)
 					reader.onloadend = function () {
 					addCsvInput().value = reader.result;
@@ -612,9 +618,6 @@ function addCsvInput() {
 	return node.children[4];
 }
 
-loadData();
-
-updateAll();
 </script>
 
 Copyright (c) 2018 yulvil <a href="https://github.com/yulvil/chromosome-browser">Help</a> and <a href="https://github.com/yulvil/chromosome-browser">Source Code</a>
