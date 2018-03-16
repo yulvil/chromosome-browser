@@ -8,8 +8,6 @@
 div.tooltip {
     position: absolute;
     text-align: left;
-    // width: 180px;
-    // height: 65px;
     padding: 10px;
     font: 12px sans-serif;
     background: lightsteelblue;
@@ -79,6 +77,13 @@ input[type=number]{
 </select>
 
 <br/><br/>
+<label for="chrsize">Chromosome Size</label>
+<select id="chrsize" onchange="updateAll();">
+  <option value="screenwidth" selected="selected">screen width</option>
+  <option value="proportional">proportional</option>
+</select>
+
+<br/><br/>
 <label for="chr">View Type</label>
 <select id="viewtype" onchange="updateAll();">
   <option value="compact" selected="selected">Compact</option>
@@ -90,8 +95,12 @@ input[type=number]{
 
 <br/><br/>
 <label for="minCm">Centimorgan size</label>
-from <input id="minCm" type="number" value="5" onChange="updateAll();">
-to <input id="maxCm" type="number" value="" onChange="updateAll();">
+from <input id="minCm" type="number" value="15" onChange="updateAll();" onInput="updateAll();">
+to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="updateAll();">
+
+<br/><br/>
+<label for="segmentHeight">Segment Height</label>
+<input id="segmentHeight" type="number" value="10" onChange="updateAll();" onInput="updateAll();">
 
 <br/><br/>
 <div style="width: 100%; overflow: hidden;">
@@ -403,12 +412,16 @@ function sortData(data, viewType) {
 	return data;
 }
 
-var width = 2000;
+var width = window.innerWidth || document.width;
 
-function updateChr(e) {
+function updateChr(e, chrsize) {
 	var chrSvg = d3.select(`#chrg${e.chr}`);
+	var segmentHeight = +document.getElementById("segmentHeight").value;
+	// var chrsize = document.getElementById("chrsize").value;
+	// console.log(chrsize);
 
-	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, width]);
+	// var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, width]);
+	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, chrsize]);
 
 	var rectangles = chrSvg.selectAll(".segment").data(e.segments, function (d) {
 			return d.id
@@ -416,20 +429,20 @@ function updateChr(e) {
 
 	rectangles.exit().remove();
 
-	var rectangleAttributes = rectangles.enter().append("rect")
+	var rectangleAttributesEnter = rectangles.enter().append("rect")
 		.attr("class", "segment")
 		.attr("x", function (d) {
 			return sc(d.start);
 		})
 		.attr("y", function (d, i) {
-			return 1 + d.row * 21;
+			return 1 + d.row * (segmentHeight + 1);
 		})
 		.attr("rx", 4)
 		.attr("ry", 4)
 		.attr("width", function (d) {
 			return sc(d.end) - sc(d.start);
 		})
-		.attr("height", 20)
+		.attr("height", segmentHeight)
 		.style("fill", function (d) {
 			return d.color;
 		})
@@ -453,13 +466,35 @@ function updateChr(e) {
 		});
 
 	rectangles
+		.attr("x", function (d) {
+			return sc(d.start);
+		})
+		.attr("y", function (d, i) {
+			return 1 + d.row * (segmentHeight + 1);
+		})
+		.attr("width", function (d) {
+			return sc(d.end) - sc(d.start);
+		})
+		.attr("height", segmentHeight)
+
+	rectangles
 	.transition()
 	.duration(400)
 	.attr("y", function (d, i) {
-		return 1 + d.row * 21;
+		return 1 + d.row * (segmentHeight + 1);
 	});
 
-	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (20 + 1))
+	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (segmentHeight + 1))
+}
+
+function getChrBoxWidth(chr, chrsize) {
+	if (chrsize === 'proportional') {
+	console.log('proportional');
+		return width * chrlen[chr] / chrlen[1];
+	}
+
+	console.log('screenwidth');
+	return width;
 }
 
 function updateAll() {
@@ -469,6 +504,8 @@ function updateAll() {
 	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
 	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
 	var chr = +document.getElementById("chr").value;
+	var segmentHeight = +document.getElementById("segmentHeight").value;
+	var chrsize = document.getElementById("chrsize").value;
 
 	var d = filterData(data, kits, excludekits, minCm, maxCm, chr);
 	d = sortData(d, viewType);
@@ -477,6 +514,11 @@ function updateAll() {
 	var chrUpdate = topSvg.selectAll("svg").data(d, function (d) {
 			return d.chr
 		});
+
+	// Remove chromosomes that should no longer be displayed
+	chrUpdate.exit().remove();
+
+	// Create chromosomes that were not previously displayed
 	var chrEnter = chrUpdate.enter();
 	var chrSvg = chrEnter.append("svg").attr("id", function (d) {
 			return `chrsvg${d.chr}`
@@ -489,25 +531,26 @@ function updateAll() {
 		});
 	g.append("rect").attr("id", function (d) {
 		return `chrrect${d.chr}`
-	}).attr("class", "chrbox").attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("width", width).attr("height", function (d, i) {
-		return 1 + d.numRows * (20 + 1)
+	}).attr("class", "chrbox").attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("height", function (d, i) {
+		return 1 + d.numRows * (segmentHeight + 1)
 	}).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
 
-	chrUpdate.exit().remove();
+	var chrBoxUpdate = d3.selectAll(".chrbox");
+	chrBoxUpdate.attr("width", function (d) { return getChrBoxWidth(d.chr, chrsize) });
 
 	chrUpdate.attr("height", function (d) {
-		return 1 + d.numRows * (20 + 1)
+		return 1 + d.numRows * (segmentHeight + 1)
 	});
 
 	d.forEach(function (e) {
-		updateChr(e)
+		updateChr(e, getChrBoxWidth(e.chr, chrsize))
 	});
 
 	var y = 0;
 	for (var i = 0; i < d.length; i++) {
 		var node = d3.select(`#chrsvg${d[i].chr}`);
 		node.attr("y", y);
-		y += 1 + d[i].numRows * (20 + 1) + 15;
+		y += 1 + d[i].numRows * (segmentHeight + 1) + 15;
 	}
 
 	d3.select(`#topsvg`).attr("height", y).attr("viewBox", `0 0 ${width + 50} ${y}`).attr("preserveAspectRatio", "none");
