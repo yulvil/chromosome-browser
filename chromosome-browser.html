@@ -24,7 +24,8 @@ textarea {
 
 #drop_zone {
 	border: 2px dashed #000;
-    width:  220px;
+	width:  250px;
+	height: 100px;
 	float: left;
 	text-align: center;
 }
@@ -91,7 +92,9 @@ input[type=number]{
   <option value="compactreverse">Compact (reverse)</option>
   <option value="segment">By Segment</option>
   <option value="segmentreverse">By Segment (reverse)</option>
+<!--
   <option value="kitsize">By Kit Size</option>
+-->
 </select>
 
 <br/><br/>
@@ -122,15 +125,15 @@ to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="upd
     <br/><br/>
     <label for="csvdata0">CSV Data</label>
     <br/>
-    <textarea name="csvdata0" id="csvdata0" onChange="loadData();updateAll();">
+    <textarea name="csvdata0" id="csvdata0" class="csvdata" onChange="loadData();updateAll();">
     </textarea>
   </div>
 </div>
 
 <br/><br/>
-<label for="kits">Only show these kits (one per line)</label>
+<label for="includekits">Only show these kits (one per line)</label>
 <br/>
-<textarea name="kits" id="kits" onChange="updateAll();">
+<textarea name="includekits" id="includekits" onChange="updateAll();">
 </textarea>
 
 <br/><br/>
@@ -138,6 +141,12 @@ to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="upd
 <br/>
 <textarea name="excludekits" id="excludekits" onChange="updateAll();">
 </textarea>
+
+<br/><br/>
+<label for="fromkit">Active Kit</label>
+<select id="fromkit" onchange="updateAll();">
+</select>
+
 
 </form>
 </div>
@@ -191,7 +200,10 @@ function sortBySegment(data, fcmp) {
 		d[i].row = i;
 	}
 
-	return [d, data.length];
+	return {
+		"data": d,
+		"numRows": data.length
+	};
 }
 
 function sortByKitSize(data) {
@@ -231,7 +243,10 @@ function sortByKitSize(data) {
 			numRows = currRow + 1;
 	}
 
-	return [d, numRows];
+	return {
+		"data": d,
+		"numRows": numRows
+	};
 }
 
 function compact(data, fcmp) {
@@ -270,7 +285,10 @@ function compact(data, fcmp) {
 		}
 	}
 
-	return [d, numRows];
+	return {
+		"data": d,
+		"numRows": numRows
+	};
 }
 
 // Define the div for the tooltip
@@ -278,138 +296,163 @@ var div = d3.select("body").append("div")
 	.attr("class", "tooltip")
 	.style("opacity", 0);
 
-var data = [];
+// data = {
+//   "kit1": [segments],
+//   "kit2": [segments]
+// }
+var data = {};
+
 var filteredData = [];
 
-function remapChr(chr) {
-	return (chr == 'X') ? 23 : +chr;
-}
-
+// kits = {
+//   "AZ123": {"name": "John Doe", "email": "a@b.c", "color": "..."},
+// }
 var kits = {};
 
-function colors(s) {
-	return s.match(/.{6}/g).map(function (x) {
-		return "#" + x;
-	});
-}
-
-// var category20 = colors("1f77b4aec7e8ff7f0effbb782ca02c98df8ad62728ff98969467bdc5b0d58c564bc49c94e377c2f7b6d27f7f7fc7c7c7bcbd22dbdb8d17becf9edae5");
-
-var cat10 = d3.scaleOrdinal(d3.schemeCategory20);
-function getColorForKit(d) {
-	if (kits[d.kit]) {
-		return kits[d.kit].color;
-	} else {
-		var c = cat10(d.kit);
-		kits[d.kit] = {
-			"color": c
-		};
-		return c;
-	}
-}
+var cat20 = d3.scaleOrdinal(d3.schemeCategory20);
 
 function csvParse(text) {
 	return d3.csvParse(text, function (d, i) {
-		d.chr = remapChr(d.chr || d["CHROMOSOME"] || d["Chromosome"]);
-		d.start = (+d.start || 0) + (+d["START LOCATION"] || 0) + (+d["Start Location"] || 0);
-		d.end = (+d.end || 0) + (+d["END LOCATION"] || 0) + (+d["End Location"] || 0);
-		d.cm = (+d.cm || 0) + (+d["CENTIMORGANS"] || 0) + (+d["Centimorgans"] || 0);
-		d.name = (d.name || "") + (d["MATCHNAME"] || "") + (d["Match name"] || "");
-		d.kit = (d.kit || d.name);
+		var e = {};
+		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || null;
+		e.chr =  + (d.chr || d["CHROMOSOME"] || d["Chromosome"]) || 23;
+		e.start =  + (d.start || d["START LOCATION"] || d["Start Location"]) || 0;
+		e.end =  + (d.end || d["END LOCATION"] || d["End Location"]) || 0;
+		e.cm =  + (d.cm || d["CENTIMORGANS"] || d["Centimorgans"]) || 0;
+		e.kitTo = d.kit2 || d["MATCHNAME"] || d["Match name"] || "";
 
-		d.row = 0;
-		d.id = Math.random().toString(36);
-		if (!d.color) {
-			d.color = getColorForKit(d);
+		if (!kits[e.kitFrom]) {
+			var nameFrom = (d.name1 || d.name || d.Name || "");
+			var emailFrom = (d.email1 || "");
+			kits[e.kitFrom] = {
+				"kit": e.kitFrom,
+				"name": nameFrom,
+				"email": emailFrom
+			};
 		}
-		return d;
+		if (!kits[e.kitTo]) {
+			var nameTo = d.name2 || d["MATCHNAME"] || d["Match name"] || "";
+			var emailTo = (d.email2 || "");
+			kits[e.kitTo] = {
+				"kit": e.kitTo,
+				"name": nameTo,
+				"email": emailTo,
+				"color": cat20(e.kitTo)
+			};
+		}
+
+		e.row = 0;
+		e.id = Math.random().toString(36);
+
+		d = null;
+
+		return e;
 	});
 }
 
 function loadData() {
-	data = [];
+	data = {};
+	kits = {};
 	filteredData = [];
 
-	var d = [];
-
-	var div = document.getElementById("csvdatadiv");
-	for (var i = 1; i < div.children.length; i++) {
-		var raw = document.getElementById('csvdata' + i).value;
-		d = d.concat(csvParse(raw));
-	}
-
-	for (var i = 1; i <= 23; i++) {
-		var dd = d.filter(e => e.chr == i);
-		if (dd.length > 0) {
-			data.push({
-				"chr": i,
-				"segments": dd
-			});
+	var j = 1;
+	while (true) {
+		var csvdata = document.getElementById('csvdata' + j);
+		if (!csvdata) {
+			break;
 		}
+
+		var raw = csvdata.value;
+		var d = csvParse(raw);
+
+		for (var i = 0; i < d.length; i++) {
+			if (d[i].kitFrom == null) {
+				continue;
+			}
+			data[d[i].kitFrom] = data[d[i].kitFrom] || [];
+			data[d[i].kitFrom].push(d[i]);
+		}
+
+		j++;
 	}
+
+	setOptions();
+}
+
+function setOptions() {
+	var sel = d3.select("#fromkit").selectAll("option").data(Object.keys(data).map(x => kits[x]));
+	sel.enter().append("option").attr("value", function (d) {
+		return d.kit
+	}).text(function (d) {
+		return d.kit + (d.name != d.kit ? " " + d.name : "")
+	});
+	sel.exit().remove();
 }
 
 // https://en.wikipedia.org/wiki/Chromosome#Human_chromosomes
 const chrlen = [0, 247199719, 242751149, 199446827, 191263063, 180837866, 170896993, 158821424, 146274826, 140442298, 135374737, 134452384, 132289534, 114127980, 106360585, 100338915, 88822254, 78654742, 76117153, 63806651, 62435965, 46944323, 49528953, 154913754];
 
-function filterData(data, kits, excludekits, minCm, maxCm, chr) {
-	var resp = [];
+function filterData(segments, includekits, excludekits, minCm, maxCm) {
+	filteredData = [];
 
-	for (var i = 0; i < data.length; i++) {
-
-		// filter chromosomes
-		if (chr > 0 && data[i].chr !== chr) {
-			continue;
-		}
-
-		var d = data[i].segments;
-		if (d.length > 0 && kits.length > 0) {
-			d = d.filter(e => kits.includes(e.kit));
-		}
-
-		if (d.length > 0 && excludekits.length > 0) {
-			d = d.filter(e => !excludekits.includes(e.kit));
-		}
-
-		if (d.length > 0) {
-			d = d.filter(e => e.cm >= minCm);
-		}
-		if (d.length > 0) {
-			d = d.filter(e => e.cm <= maxCm);
-		}
-		if (d.length > 0) {
-			resp.push({
-				"chr": data[i].chr,
-				"segments": d
-			});
-		}
+	if (segments.length == 0) {
+		return;
 	}
 
-	return resp;
+	var d = segments;
+
+	if (includekits.length > 0) {
+		d = d.filter(e => includekits.includes(e.kitTo));
+	}
+
+	d = d.filter(e => e.cm >= minCm);
+
+	d = d.filter(e => e.cm <= maxCm);
+
+	if (excludekits.length > 0) {
+		d = d.filter(e => !excludekits.includes(e.kitTo));
+	}
+
+	for (var i = 0; i <= 23; i++) {
+		var o = {
+			"chr": i,
+			"segments": []
+		};
+		filteredData.push(o);
+	}
+
+	for (var i = 0; i < d.length; i++) {
+		// filteredData[d[i].chr] = filteredData[d[i].chr] || {"segments": []};
+		filteredData[d[i].chr].segments.push(d[i]);
+	}
+
+	filteredData = filteredData.filter(e => e.segments.length > 0);
 }
 
 function sortData(data, viewType) {
+	var o = {};
+
 	for (var i = 0; i < data.length; i++) {
 		switch (viewType) {
 		case "compact":
-			[d, numRows] = compact(data[i].segments, compareSegment);
+			o = compact(data[i].segments, compareSegment);
 			break;
 		case "compactreverse":
-			[d, numRows] = compact(data[i].segments, compareSegmentReverse);
+			o = compact(data[i].segments, compareSegmentReverse);
 			break;
 		case "kitsize":
-			[d, numRows] = sortByKitSize(data[i].segments);
+			o = sortByKitSize(data[i].segments);
 			break;
 		case "segment":
-			[d, numRows] = sortBySegment(data[i].segments, compareSegment);
+			o = sortBySegment(data[i].segments, compareSegment);
 			break;
 		case "segmentreverse":
-			[d, numRows] = sortBySegment(data[i].segments, compareSegmentReverse);
+			o = sortBySegment(data[i].segments, compareSegmentReverse);
 			break;
 		}
 
-		data[i].segments = d;
-		data[i].numRows = numRows;
+		data[i].segments = o.data;
+		data[i].numRows = o.numRows;
 	}
 
 	return data;
@@ -444,20 +487,20 @@ function updateChr(e, chrsize) {
 		})
 		.attr("height", segmentHeight)
 		.style("fill", function (d) {
-			return d.color;
+			return kits[d.kitTo].color;
 		})
 		.on("mouseover", function (d) {
 			name = "";
-			if (d.name !== d.kit) {
-				name = "<br>name " + d.name;
+			if (kits[d.kitTo].name !== d.kitTo) {
+				name = "<br>name " + kits[d.kitTo].name;
 			}
 			div.transition()
 			.duration(200)
 			.style("opacity", 1.0);
-			div.html(d.start + " to " + d.end + "<br>kit " + d.kit + name + "<br/>This segment " + d.cm + " cM")
+			div.html(d.start + " to " + d.end + "<br>kit " + d.kitTo + name + "<br/>This segment " + d.cm + " cM")
 			.style("left", (d3.event.pageX) + "px")
 			.style("top", (d3.event.pageY - 28) + "px");
-			console.log(d.start + " to " + d.end + " kit [" + d.kit + "] name " + d.name);
+			console.log(d.start + " to " + d.end + " kit [" + d.kitTo + "] name " + d.name);
 		})
 		.on("mouseout", function (d) {
 			div.transition()
@@ -501,15 +544,13 @@ function updateDisplay() {
 	var segmentHeight = +document.getElementById("segmentHeight").value;
 	var chrsize = document.getElementById("chrsize").value;
 
-	var d = sortData(filteredData, viewType);
+	var filteredByChr = filteredData; //.filter(e => e === '');
+	var d = sortData(filteredByChr, viewType);
 
 	var topSvg = d3.select("#topsvg");
 	var chrUpdate = topSvg.selectAll("svg").data(d, function (d) {
 			return d.chr
 		});
-
-	// Remove chromosomes that should no longer be displayed
-	chrUpdate.exit().remove();
 
 	// Create chromosomes that were not previously displayed
 	var chrEnter = chrUpdate.enter();
@@ -537,9 +578,12 @@ function updateDisplay() {
 		return 1 + d.numRows * (segmentHeight + 1)
 	});
 
-	d.forEach(function (e) {
-		updateChr(e, getChrBoxWidth(e.chr, chrsize))
-	});
+	for (var chr in d) {
+		updateChr(d[chr], getChrBoxWidth(d[chr].chr, chrsize))
+	}
+
+	// Remove chromosomes that should no longer be displayed
+	chrUpdate.exit().remove();
 
 	var y = 0;
 	for (var i = 0; i < d.length; i++) {
@@ -552,13 +596,14 @@ function updateDisplay() {
 }
 
 function updateData() {
-	var kits = document.getElementById("kits").value.split('\n').filter(e => e.length > 0);
+	var fromkit = document.getElementById("fromkit").value;
+	var includekits = document.getElementById("includekits").value.split('\n').filter(e => e.length > 0);
 	var excludekits = document.getElementById("excludekits").value.split('\n').filter(e => e.length > 0);
 	var minCm = document.getElementById("minCm").value || 5;
 	var maxCm = document.getElementById("maxCm").value || 1000;
-	var chr = +document.getElementById("chr").value;
 
-	filteredData = filterData(data, kits, excludekits, minCm, maxCm, chr);
+	var segments = data[fromkit] || [];
+	filterData(segments, includekits, excludekits, minCm, maxCm);
 }
 
 function dragOverHandler(ev) {
@@ -566,34 +611,51 @@ function dragOverHandler(ev) {
 	ev.preventDefault();
 }
 
+function loadFile(fileitem, resolve, reject) {
+	var file = fileitem.getAsFile();
+	var reader = new FileReader();
+	reader.onloadend = function () {
+		addCsvInput().value = reader.result;
+		resolve('');
+	}
+	reader.onerror = function () {
+		reject(arguments);
+	}
+	reader.readAsText(file);
+}
+
 function dropHandler(ev) {
 	// Prevent default behavior (Prevent file from being opened)
 	ev.preventDefault();
+
+	var tasks = [];
 
 	if (ev.dataTransfer.items) {
 		// Use DataTransferItemList interface to access the file(s)
 		for (var i = 0; i < ev.dataTransfer.items.length; i++) {
 			// If dropped items aren't files, reject them
 			if (ev.dataTransfer.items[i].kind === 'file') {
-				var file = ev.dataTransfer.items[i].getAsFile();
-				var reader = new FileReader()
-					reader.readAsText(file)
-					reader.onloadend = function () {
-					addCsvInput().value = reader.result;
-					loadData();
-					updateAll();
-				}
+				var t = new Promise((resolve, reject) => {
+						loadFile(ev.dataTransfer.items[i], resolve, reject);
+					});
+				tasks.push(t);
 			}
 		}
 	} else {
 		// Use DataTransfer interface to access the file(s)
 		for (var i = 0; i < ev.dataTransfer.files.length; i++) {
-			// console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+			// console .log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
 		}
 	}
 
 	// Pass event to removeDragData for cleanup
 	removeDragData(ev)
+
+	// Once all files are loaded
+	Promise.all(tasks).then((msg) => {
+		loadData();
+		updateAll();
+	});
 }
 
 function removeDragData(ev) {
@@ -617,7 +679,6 @@ function addCsvInput() {
 	div.appendChild(node);
 	return node.children[4];
 }
-
 </script>
 
 Copyright (c) 2018 yulvil <a href="https://github.com/yulvil/chromosome-browser">Help</a> and <a href="https://github.com/yulvil/chromosome-browser">Source Code</a>
