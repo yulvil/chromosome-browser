@@ -18,8 +18,8 @@ div.tooltip {
 }
 
 textarea {
-    width: 800px;
-    height: 55px;
+    width: 100%;
+    // height: 55px;
 }
 
 #drop_zone {
@@ -41,17 +41,143 @@ input[type=number]{
 	display: none;
 }
 
+body {
+	margin: 0;
+}
+
+#topdiv {
+	position: static;
+	padding: 10px;
+}
+
+header {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+ul {
+	background-color: #333;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/* Change the link color to #111 (black) on hover */
+li a:hover {
+    background-color: #111;
+}
+
+.active {
+    background-color: #4CAF50;
+}
+
+nav {
+margin: 0;
+position: sticky;
+top: 0;
+right: 0;
+left: 0;
+z-index: 1000;
+}
+
+.inputs {
+	display: none;
+	padding: 10px;
+}
+
+.submenu {
+	background-color: #555;
+	color: white;
+}
+
+.chrbrowser {
+	padding: 5px;
+}
+
+#about a:link, #about a:visited {
+	color: white;
+	font-weight: bold;
+}
     </style>
   </head>
   <body>
-<h1>Yulvil Chromosome Browser</h1>
-<div id="topdiv">
+
+<header>
+</header>
+
 <form id="myform" onsubmit="return false;">
 
-<div class="filters">
+<nav>
+<ul>
+  <li><a href="#" onclick="showdiv('none');">Yulvil Chromosome Browser</a></li>
+  <li><a href="#" onclick="showdiv('data');">Data</a></li>
+  <li><a href="#" onclick="showdiv('filters');">Filters</a></li>
+  <li><a href="#" onclick="showdiv('display');">Display</a></li>
+  <li style="float: right"><a href="#" onclick="showdiv('about');">About</a></li>
+</ul>
 
-<label for="chr">Chromosome</label>
-<select id="chr" onChange="updateAll()">
+<div class="submenu">
+<div class="inputs" id="none">
+</div>
+<div class="inputs" id="data">
+<div style="width: 100%; overflow: hidden;">
+
+<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+  <p>&#128193; Drag one or more files here</p>
+</div>
+
+<div style="float: left;">
+  <p>&nbsp;or&nbsp;
+  <input type="button" name="addCsv" id="addCsv" value="Add CSV data" onclick="addCsvInput();" />
+  </p>
+</div>
+</div>
+
+<div id="csvdatadiv">
+  <div id="csvdiv0">
+    <br/><br/>
+    <label for="csvdata0">CSV Data</label>
+    <br/>
+    <textarea name="csvdata0" id="csvdata0" class="csvdata" onChange="loadData();updateAll();">
+    </textarea>
+  </div>
+</div>
+
+</div>
+<div class="inputs" id="filters">
+<label for="minCm">Centimorgan size</label>
+from <input id="minCm" type="number" value="15" onChange="updateAll();" onInput="updateAll();">
+to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="updateAll();">
+
+<br/><br/>
+<label for="includekits">Only show these kits (one per line)</label>
+<br/>
+<textarea name="includekits" id="includekits" onChange="updateAll();">
+</textarea>
+
+<br/><br/>
+<label for="excludekits">Exclude these kits (one per line)</label>
+<br/>
+<textarea name="excludekits" id="excludekits" onChange="updateAll();">
+</textarea>
+</div>
+<div class="inputs" id="display">
+<label for="chrview">Chromosome</label>
+<select id="chrview" onChange="updateAll()">
   <option value="0">All</option>
   <option value="1">1</option>
   <option value="2">2</option>
@@ -86,7 +212,7 @@ input[type=number]{
 </select>
 
 <br/><br/>
-<label for="chr">View Type</label>
+<label for="viewtype">View Type</label>
 <select id="viewtype" onchange="updateDisplay();">
   <option value="compact" selected="selected">Compact</option>
   <option value="compactreverse">Compact (reverse)</option>
@@ -96,66 +222,23 @@ input[type=number]{
   <option value="kitsize">By Kit Size</option>
 -->
 </select>
-
-<br/><br/>
-<label for="minCm">Centimorgan size</label>
-from <input id="minCm" type="number" value="15" onChange="updateAll();" onInput="updateAll();">
-to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="updateAll();">
-
 <br/><br/>
 <label for="segmentHeight">Segment Height</label>
 <input id="segmentHeight" type="number" value="10" onChange="updateDisplay();" onInput="updateAll();">
 
 <br/><br/>
-<div style="width: 100%; overflow: hidden;">
-
-<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
-  <p>&#128193; Drag one or more files here</p>
-</div>
-
-<div style="float: left;">
-  <p>&nbsp;or&nbsp;
-  <input type="button" name="addCsv" id="addCsv" value="Add CSV data" onclick="addCsvInput();" />
-  </p>
-</div>
-</div>
-
-<div id="csvdatadiv">
-  <div id="csvdiv0">
-    <br/><br/>
-    <label for="csvdata0">CSV Data</label>
-    <br/>
-    <textarea name="csvdata0" id="csvdata0" class="csvdata" onChange="loadData();updateAll();">
-    </textarea>
-  </div>
-</div>
-
-<br/><br/>
-<label for="includekits">Only show these kits (one per line)</label>
-<br/>
-<textarea name="includekits" id="includekits" onChange="updateAll();">
-</textarea>
-
-<br/><br/>
-<label for="excludekits">Exclude these kits (one per line)</label>
-<br/>
-<textarea name="excludekits" id="excludekits" onChange="updateAll();">
-</textarea>
-
-<br/><br/>
 <label for="fromkit">Active Kit</label>
 <select id="fromkit" onchange="updateAll();">
 </select>
-
-
+</div>
+<div class="inputs" id="about">
+Copyright (c) 2018 yulvil <a href="https://github.com/yulvil/chromosome-browser">Help</a> and <a href="https://github.com/yulvil/chromosome-browser">Source Code</a>
+</div>
+</div>
+</nav>
 </form>
-</div>
 
-<br/>
-
-</div>
-
-<div id="chrbrowser">
+<div class="chrbrowser">
 <svg id="topsvg" width="100%"/>
 </div>
 
@@ -540,11 +623,14 @@ function updateAll() {
 
 function updateDisplay() {
 	var viewType = document.getElementById("viewtype").value;
-	var chr = +document.getElementById("chr").value;
+	var chrview = +document.getElementById("chrview").value;
 	var segmentHeight = +document.getElementById("segmentHeight").value;
 	var chrsize = document.getElementById("chrsize").value;
 
-	var filteredByChr = filteredData; //.filter(e => e === '');
+	var filteredByChr = filteredData;
+	if (chrview != 0 ) {
+		filteredByChr = filteredData.filter(e => e.chr == chrview);
+	}
 	var d = sortData(filteredByChr, viewType);
 
 	var topSvg = d3.select("#topsvg");
@@ -679,8 +765,24 @@ function addCsvInput() {
 	div.appendChild(node);
 	return node.children[4];
 }
-</script>
 
-Copyright (c) 2018 yulvil <a href="https://github.com/yulvil/chromosome-browser">Help</a> and <a href="https://github.com/yulvil/chromosome-browser">Source Code</a>
+function showdiv(id) {
+	var currentStyle = d3.select("#" + id).attr("style");
+	if (currentStyle === 'display: block;') {
+		d3.select("#" + id).attr("style", "display: none;");
+	} else {
+		d3.select("#data").attr("style", "display: none;");
+		d3.select("#filters").attr("style", "display: none;");
+		d3.select("#display").attr("style", "display: none;");
+		d3.select("#about").attr("style", "display: none;");
+		if (id !== 'none') {
+			d3.select("#" + id).attr("style", "display: block;");
+		}
+	}
+}
+
+showdiv('data');
+
+</script>
 	</body>
 </html>
