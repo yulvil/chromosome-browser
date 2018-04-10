@@ -782,7 +782,35 @@ function showdiv(id) {
 	}
 }
 
-showdiv('data');
+function loadURL(url) {
+	var x = d3.text(url, function (data) {
+			addCsvInput().value = data;
+			loadData();
+			updateAll();
+		});
+}
+
+function pageLoad() {
+	var params = new URLSearchParams(location.search);
+	let urls = params.getAll("url");
+
+	if (urls.length > 0) {
+		loadURL(urls[0]);
+	}
+
+	var h = window.location.hash;
+	if (h === '#Filters') {
+		showdiv('filters');
+	} else if (h === '#Display') {
+		showdiv('display');
+	} else if (h === '#none') {
+		showdiv('none');
+	} else {
+		showdiv('data');
+	}
+}
+
+pageLoad();
 
 </script>
 	</body>
