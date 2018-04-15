@@ -57,7 +57,7 @@ header {
     overflow: hidden;
 }
 
-ul {
+nav ul {
 	background-color: #333;
     list-style-type: none;
     margin: 0;
@@ -65,11 +65,11 @@ ul {
     overflow: hidden;
 }
 
-li {
+nav li {
     float: left;
 }
 
-li a {
+nav li a {
     display: block;
     color: white;
     text-align: center;
@@ -78,11 +78,11 @@ li a {
 }
 
 /* Change the link color to #111 (black) on hover */
-li a:hover {
+nav li a:hover {
     background-color: #111;
 }
 
-.active {
+nav .active {
     background-color: #4CAF50;
 }
 
@@ -161,7 +161,7 @@ z-index: 1000;
 </div>
 <div class="inputs" id="filters">
 <label for="minCm">Centimorgan size</label>
-from <input id="minCm" type="number" value="15" onChange="updateAll();" onInput="updateAll();">
+from <input id="minCm" type="number" value="10" onChange="updateAll();" onInput="updateAll();">
 to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="updateAll();">
 
 <br/><br/>
@@ -406,7 +406,7 @@ function csvParse(text) {
 		e.kitTo = d.kit2 || d["MATCHNAME"] || d["Match name"] || "";
 
 		if (!kits[e.kitFrom]) {
-			var nameFrom = (d.name1 || d.name || d.Name || "");
+			var nameFrom = (d.name1 || d.name || d.NAME || d.Name || "");
 			var emailFrom = (d.email1 || "");
 			kits[e.kitFrom] = {
 				"kit": e.kitFrom,
@@ -417,11 +417,12 @@ function csvParse(text) {
 		if (!kits[e.kitTo]) {
 			var nameTo = d.name2 || d["MATCHNAME"] || d["Match name"] || "";
 			var emailTo = (d.email2 || "");
+			var color = d.color || cat20(e.kitTo);
 			kits[e.kitTo] = {
 				"kit": e.kitTo,
 				"name": nameTo,
 				"email": emailTo,
-				"color": cat20(e.kitTo)
+				"color": color
 			};
 		}
 
