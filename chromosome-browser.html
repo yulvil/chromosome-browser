@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -23,12 +24,13 @@ textarea {
     // height: 55px;
 }
 
-#drop_zone {
+.drop_zone {
 	border: 2px dashed #000;
 	width:  250px;
 	height: 100px;
 	float: left;
 	text-align: center;
+	margin: 0px 20px 0px 0px;
 }
 
 input[type=number]{
@@ -52,47 +54,47 @@ body {
 }
 
 header {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
 }
 
 nav ul {
 	background-color: #333;
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
 }
 
 nav li {
-    float: left;
+	float: left;
 }
 
 nav li a {
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
+	display: block;
+	color: white;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
 }
 
 /* Change the link color to #111 (black) on hover */
 nav li a:hover {
-    background-color: #111;
+	background-color: #111;
 }
 
 nav .active {
-    background-color: #4CAF50;
+	background-color: #4CAF50;
 }
 
 nav {
-margin: 0;
-position: sticky;
-top: 0;
-right: 0;
-left: 0;
-z-index: 1000;
+	margin: 0;
+	position: sticky;
+	top: 0;
+	right: 0;
+	left: 0;
+	z-index: 1000;
 }
 
 .inputs {
@@ -125,9 +127,9 @@ z-index: 1000;
 <nav>
 <ul>
   <li><a href="#" onclick="showdiv('none');">Yulvil Chromosome Browser</a></li>
-  <li><a href="#" onclick="showdiv('data');">Data</a></li>
-  <li><a href="#" onclick="showdiv('filters');">Filters</a></li>
-  <li><a href="#" onclick="showdiv('display');">Display</a></li>
+  <li><a href="#Data" onclick="showdiv('data');">Data</a></li>
+  <li><a href="#Filters" onclick="showdiv('filters');">Filters</a></li>
+  <li><a href="#Display" onclick="showdiv('display');">Display</a></li>
   <li style="float: right"><a href="#" onclick="showdiv('about');">About</a></li>
 </ul>
 
@@ -137,12 +139,21 @@ z-index: 1000;
 <div class="inputs" id="data">
 <div style="width: 100%; overflow: hidden;">
 
-<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+<div class="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
   <p>&#128193; Drag one or more files here</p>
 </div>
 
+<div class="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+<p>
+  <label class="custom-file-upload">
+    <input type="file" multiple="multiple" accept=".csv, .txt" onchange="onFileSelect(this);" style="display: none;"/>
+    &#128193; Select files from your computer
+  </label>
+</p>
+</div>
+
 <div style="float: left;">
-  <p>&nbsp;or&nbsp;
+  <p>or
   <input type="button" name="addCsv" id="addCsv" value="Add CSV data" onclick="addCsvInput();" />
   </p>
 </div>
@@ -700,7 +711,7 @@ function dragOverHandler(ev) {
 }
 
 function loadFile(fileitem, resolve, reject) {
-	var file = fileitem.getAsFile();
+	var file = fileitem;
 	var reader = new FileReader();
 	reader.onloadend = function () {
 		addCsvInput().value = reader.result;
@@ -724,7 +735,7 @@ function dropHandler(ev) {
 			// If dropped items aren't files, reject them
 			if (ev.dataTransfer.items[i].kind === 'file') {
 				var t = new Promise((resolve, reject) => {
-						loadFile(ev.dataTransfer.items[i], resolve, reject);
+						loadFile(ev.dataTransfer.items[i].getAsFile(), resolve, reject);
 					});
 				tasks.push(t);
 			}
@@ -783,6 +794,28 @@ function showdiv(id) {
 	}
 }
 
+function onFileSelect(e) {
+	var tasks = [];
+
+	if (!e.files) {
+		return;
+	}
+
+	for (var i=0; i<e.files.length; i++) {
+		console.log(e.files[i]);
+		var t = new Promise((resolve, reject) => {
+			loadFile(e.files[i], resolve, reject);
+		});
+		tasks.push(t);
+	}
+
+	// Once all files are loaded
+	Promise.all(tasks).then((msg) => {
+		loadData();
+		updateAll();
+	});
+}
+
 function loadURL(url) {
 	var x = d3.text(url, function (data) {
 			addCsvInput().value = data;
@@ -792,6 +825,12 @@ function loadURL(url) {
 }
 
 function pageLoad() {
+	if (typeof URLSearchParams === 'undefined') {
+		console.log(window.document.URL);
+		showdiv('data');
+		return;
+	}
+
 	var params = new URLSearchParams(location.search);
 	let urls = params.getAll("url");
 
