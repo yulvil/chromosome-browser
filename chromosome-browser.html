@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -825,14 +824,16 @@ function loadURL(url) {
 }
 
 function pageLoad() {
-	if (typeof URLSearchParams === 'undefined') {
-		console.log(window.document.URL);
-		showdiv('data');
-		return;
-	}
+	var urls = [];
 
-	var params = new URLSearchParams(location.search);
-	let urls = params.getAll("url");
+	if (typeof URLSearchParams === 'undefined') {
+		if (window.location.search.startsWith("?url=")) {
+			urls.push(window.location.search.substring(5));
+		}
+	} else {
+		var params = new URLSearchParams(location.search);
+		urls = params.getAll("url");
+	}
 
 	if (urls.length > 0) {
 		loadURL(urls[0]);
