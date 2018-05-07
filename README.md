@@ -1,5 +1,8 @@
 # chromosome-browser
-A chromosome browser that displays csv data (gedmatch, ftdna, myheritage) in a SVG
+
+**Goals**:
+* A chromosome browser to easily find overlapping DNA segments between your matches
+* Visualize segment data from multiple sources at the same time: gedmatch, familytreedna, myheritage or your handcrafted csv file.
 
 **Try it**: https://yulvil.github.io/chromosome-browser.html
 
