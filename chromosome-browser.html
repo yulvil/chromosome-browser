@@ -408,12 +408,12 @@ var cat20 = d3.scaleOrdinal(d3.schemeCategory20);
 function csvParse(text) {
 	return d3.csvParse(text, function (d, i) {
 		var e = {};
-		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || null;
-		e.chr =  + (d.chr || d["CHROMOSOME"] || d["Chromosome"]) || 23;
-		e.start =  + (d.start || d["START LOCATION"] || d["Start Location"]) || 0;
-		e.end =  + (d.end || d["END LOCATION"] || d["End Location"]) || 0;
-		e.cm =  + (d.cm || d["CENTIMORGANS"] || d["Centimorgans"]) || 0;
-		e.kitTo = d.kit2 || d["MATCHNAME"] || d["Match name"] || "";
+		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || "unknown";
+		e.chr =  + (d.chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"]) || 23;
+		e.start =  + (d.start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"]) || 0;
+		e.end =  + (d.end || d["END LOCATION"] || d["End Location"] || d["Chromosome End Point"]) || 0;
+		e.cm =  + (d.cm || d["CENTIMORGANS"] || d["Centimorgans"] || d["Genetic Distance"]) || 0;
+		e.kitTo = d.kit2 || d.matchname || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
 
 		if (!kits[e.kitFrom]) {
 			var nameFrom = (d.name1 || d.name || d.NAME || d.Name || "");
@@ -425,7 +425,7 @@ function csvParse(text) {
 			};
 		}
 		if (!kits[e.kitTo]) {
-			var nameTo = d.name2 || d["MATCHNAME"] || d["Match name"] || "";
+			var nameTo = d.name2 || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
 			var emailTo = (d.email2 || "");
 			var color = d.color || cat20(e.kitTo);
 			kits[e.kitTo] = {
