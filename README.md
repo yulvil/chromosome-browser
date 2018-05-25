@@ -2,12 +2,12 @@
 
 **Goals**:
 * A chromosome browser to easily find overlapping DNA segments between your matches
-* Visualize segment data from multiple sources at the same time: gedmatch, familytreedna, myheritage or your handcrafted csv file.
+* Visualize segment data from multiple sources at the same time: gedmatch, familytreedna, myheritage, 23andme or your handcrafted csv file.
 
 **Try it**: https://yulvil.github.io/chromosome-browser.html
 
 Features
-* Copy/paste your CSV data (gedmatch, familytreedna, myheritage)
+* Copy/paste your CSV data (gedmatch, familytreedna, myheritage, 23andme)
 * Drag and drop CSV files from your desktop
 * All the rendering is done on the client side. No data sent to servers.
 * Filter by centimorgan (cM)
@@ -33,6 +33,11 @@ gedmatch.com segments file format
 "kit1","name1","email1","kit2","name2","email2","chr","start","end","cm"
 ```
 
+23andme segments file format
+```
+"Display Name","Surname","Chromosome Number","Chromosome Start Point","Chromosome End Point","Genetic Distance","# SNPs","Full IBD","Link to Compare View","Sex","Birth Year","Set Relationship","Predicted Relationship","Relative Range","Percent DNA Shared","# Segments Shared","Maternal Side","Paternal Side","Maternal Haplogroup","Paternal Haplogroup","Birthplace","Residence","Family Surnames","Family Locations","Maternal Grandmother Birth Country","Maternal Grandfather Birth Country","Paternal Grandmother Birth Country","Paternal Grandfather Birth Country","Self Reported Ashkenazi Jewish Descent","Notes","Sharing Status"
+```
+
 ### Export segments file
 
 To export your segment data (familytreedna.com)
@@ -53,6 +58,11 @@ To export your segment data (gedmatch.com)
 * Click the `Submit` button
 * Click the `List/CSV` tab
 * Click the `Segment CSV file` button
+
+To export your segment data (23andme)
+* Sign in to 23andme.com
+* Click on `DNA relatives`
+* Click on `Download aggregate data`
 
 ## TODO
 * Sort by cM
