@@ -409,6 +409,10 @@ function csvParse(text) {
 	return d3.csvParse(text, function (d, i) {
 		var e = {};
 		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name;
+		if (!e.kitFrom) {
+			return;
+		}
+
 		e.chr =  + (d.chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"]) || 23;
 		e.start =  + (d.start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"]) || 0;
 		e.end =  + (d.end || d["END LOCATION"] || d["End Location"] || d["Chromosome End Point"]) || 0;
@@ -794,16 +798,20 @@ function showdiv(id) {
 }
 
 function onFileSelect(e) {
-	var tasks = [];
-
 	if (!e.files) {
 		return;
 	}
 
-	for (var i=0; i<e.files.length; i++) {
-		console.log(e.files[i]);
+	loadAll(e.files, loadFile);
+}
+
+function loadAll(arr, f) {
+	var tasks = [];
+
+	for (var i=0; i<arr.length; i++) {
+		console.log(arr[i]);
 		var t = new Promise((resolve, reject) => {
-			loadFile(e.files[i], resolve, reject);
+			f(arr[i], resolve, reject);
 		});
 		tasks.push(t);
 	}
@@ -815,11 +823,13 @@ function onFileSelect(e) {
 	});
 }
 
-function loadURL(url) {
-	var x = d3.text(url, function (data) {
+function loadURL(url, resolve, reject) {
+	d3.text(url, function (error, data) {
+			if (error) {
+				reject(url + error);
+			}
 			addCsvInput().value = data;
-			loadData();
-			updateAll();
+			resolve('');
 		});
 }
 
@@ -836,7 +846,7 @@ function pageLoad() {
 	}
 
 	if (urls.length > 0) {
-		loadURL(urls[0]);
+		loadAll(urls, loadURL);
 	}
 
 	var h = window.location.hash;
