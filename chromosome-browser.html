@@ -449,6 +449,19 @@ function csvParse(text) {
 	});
 }
 
+function rewriteData(id) {
+	var csvdata = document.getElementById(id).value;
+	var lines = csvdata.split("\n")
+
+	if (lines[0] == "Comparison\tChrom.\tStart Position\tEnd Position\tGenetic Distance (cM)\tNumber of SNPs\tIdentity") {
+		lines[0] = "NAME,MATCHNAME,chr,start,end,cm,snps,identity";
+		for (var i=1; i<lines.length; i++) {
+			lines[i] = lines[i].replace(" / ", "\t").split("\t").join(",");
+		}
+		document.getElementById(id).value = lines.join("\n")
+	}
+}
+
 function loadData() {
 	data = {};
 	kits = {};
@@ -460,6 +473,8 @@ function loadData() {
 		if (!csvdata) {
 			break;
 		}
+
+		rewriteData('csvdata' + j);
 
 		var raw = csvdata.value;
 		var d = csvParse(raw);
