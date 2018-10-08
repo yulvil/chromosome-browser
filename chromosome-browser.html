@@ -611,7 +611,7 @@ function updateChr(e, chrsize) {
 			div.transition()
 			.duration(200)
 			.style("opacity", 1.0);
-			div.html(d.start + " to " + d.end + "<br>kit " + d.kitTo + name + "<br/>This segment " + d.cm + " cM")
+			div.html(d.start.toLocaleString() + " to " + d.end.toLocaleString() + "<br>kit " + d.kitTo + name + "<br/>This segment " + d.cm.toFixed(1) + " cM")
 			.style("left", (d3.event.pageX) + "px")
 			.style("top", (d3.event.pageY - 28) + "px");
 			console.log(d.start + " to " + d.end + " kit [" + d.kitTo + "] name " + d.name);
