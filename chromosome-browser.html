@@ -163,8 +163,7 @@ nav {
     <br/><br/>
     <label for="csvdata0">CSV Data</label>
     <br/>
-    <textarea name="csvdata0" id="csvdata0" class="csvdata" onChange="loadData();updateAll();">
-    </textarea>
+    <textarea name="csvdata0" id="csvdata0" class="csvdata" onChange="loadData();updateAll();"></textarea>
   </div>
 </div>
 
@@ -177,14 +176,12 @@ to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="upd
 <br/><br/>
 <label for="includekits">Only show these kits (one per line)</label>
 <br/>
-<textarea name="includekits" id="includekits" onChange="updateAll();">
-</textarea>
+<textarea name="includekits" id="includekits" onChange="updateAll();"></textarea>
 
 <br/><br/>
 <label for="excludekits">Exclude these kits (one per line)</label>
 <br/>
-<textarea name="excludekits" id="excludekits" onChange="updateAll();">
-</textarea>
+<textarea name="excludekits" id="excludekits" onChange="updateAll();"></textarea>
 </div>
 <div class="inputs" id="display">
 <label for="chrview">Chromosome</label>
@@ -405,19 +402,38 @@ var kits = {};
 
 var cat20 = d3.scaleOrdinal(d3.schemeCategory20);
 
+function getSide(d) {
+	let v = d.side || d.Side || 0;
+	switch (v) {
+		case "Paternal":
+		case "paternal":
+			return 1;
+		case "Maternal":
+		case "maternal":
+			return 2;
+		default:
+			return +v % 3;
+	}
+}
+
 function csvParse(text) {
+	let currKit = Math.random().toString(36);
+
 	return d3.csvParse(text, function (d, i) {
 		var e = {};
-		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name;
-		if (!e.kitFrom) {
-			return;
-		}
+		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || currKit;
 
-		e.chr =  + (d.chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"]) || 23;
-		e.start =  + (d.start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"]) || 0;
-		e.end =  + (d.end || d["END LOCATION"] || d["End Location"] || d["Chromosome End Point"]) || 0;
-		e.cm =  + (d.cm || d["CENTIMORGANS"] || d["Centimorgans"] || d["Genetic Distance"]) || 0;
-		e.kitTo = d.kit2 || d.matchname || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
+		e.chr = (d.chr || d.Chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"] || 0);
+		e.chr = e.chr === "X" || e.chr === "x" ? 23 : + ("" + e.chr).replace(/chr/, "");
+		if (e.chr < 1 || e.chr > 23) return;
+
+		e.start =  + (d.start || d.Start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"] || "0").replace(/,/g, "");
+		e.end =  + (d.end || d.End || d["END LOCATION"] || d["End Location"] || d["Chromosome End Point"] || "0").replace(/,/g, "");
+		e.cm =  + (d.cm || d.cM || d["CENTIMORGANS"] || d["Centimorgans"] || d["Genetic Distance"] || "0").replace(/,/g, "");
+		e.kitTo = d.kit2 || d.matchname || d.Match || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
+		e.side = getSide(d);
+
+console.log(e);
 
 		if (!kits[e.kitFrom]) {
 			var nameFrom = (d.name1 || d.name || d.NAME || d.Name || "");
@@ -429,9 +445,9 @@ function csvParse(text) {
 			};
 		}
 		if (!kits[e.kitTo]) {
-			var nameTo = d.name2 || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
+			var nameTo = d.name2 || d.Match || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
 			var emailTo = (d.email2 || "");
-			var color = d.color || cat20(e.kitTo);
+			var color = d.color || d.Color || d.Colour || cat20(e.kitTo);
 			kits[e.kitTo] = {
 				"kit": e.kitTo,
 				"name": nameTo,
@@ -494,7 +510,7 @@ function loadData() {
 }
 
 function setOptions() {
-	var sel = d3.select("#fromkit").selectAll("option").data(Object.keys(data).map(x => kits[x]));
+	var sel = d3.select("#fromkit").selectAll("option").data(Object.keys(data).map(x => kits[x]), function(d) {return d.kit;});
 	sel.enter().append("option").attr("value", function (d) {
 		return d.kit
 	}).text(function (d) {
@@ -528,16 +544,19 @@ function filterData(segments, includekits, excludekits, minCm, maxCm) {
 	}
 
 	for (var i = 0; i <= 23; i++) {
+	for (var j = 0; j < 3; j++) {
 		var o = {
 			"chr": i,
+			"side": j,
 			"segments": []
 		};
 		filteredData.push(o);
 	}
+	}
 
 	for (var i = 0; i < d.length; i++) {
 		// filteredData[d[i].chr] = filteredData[d[i].chr] || {"segments": []};
-		filteredData[d[i].chr].segments.push(d[i]);
+		filteredData[3*d[i].chr + d[i].side].segments.push(d[i]);
 	}
 
 	filteredData = filteredData.filter(e => e.segments.length > 0);
@@ -575,7 +594,7 @@ function sortData(data, viewType) {
 var width = window.innerWidth || document.width;
 
 function updateChr(e, chrsize) {
-	var chrSvg = d3.select(`#chrg${e.chr}`);
+	var chrSvg = d3.select(`#chrg${e.chr}_${e.side}`);
 	var segmentHeight = +document.getElementById("segmentHeight").value;
 
 	var sc = d3.scaleLinear().domain([0, chrlen[e.chr]]).range([0, chrsize]);
@@ -636,7 +655,7 @@ function updateChr(e, chrsize) {
 	})
 	.attr("height", segmentHeight)
 
-	d3.select(`#chrrect${e.chr}`).attr("height", 1 + e.numRows * (segmentHeight + 1))
+	d3.select(`#chrrect${e.chr}_${e.side}`).attr("height", 1 + e.numRows * (segmentHeight + 1))
 }
 
 function getChrBoxWidth(chr, chrsize) {
@@ -666,22 +685,22 @@ function updateDisplay() {
 
 	var topSvg = d3.select("#topsvg");
 	var chrUpdate = topSvg.selectAll("svg").data(d, function (d) {
-			return d.chr
+			return d.chr + "_" + d.side;
 		});
 
 	// Create chromosomes that were not previously displayed
 	var chrEnter = chrUpdate.enter();
 	var chrSvg = chrEnter.append("svg").attr("id", function (d) {
-			return `chrsvg${d.chr}`
+			return `chrsvg${d.chr}_${d.side}`
 		}).attr("width", "100%");
 	chrSvg.append("text").attr("x", 20).attr("y", 15).attr("class", "chrlabel").attr("font-family", "Verdana").attr("font-size", 15).attr("font-weight", "700").attr("text-anchor", "end").attr("fill", "grey").text(function (d) {
 		return d.chr == 23 ? 'X' : `${d.chr}`
 	});
 	var g = chrSvg.append("g").attr("transform", "translate(30)").attr("id", function (d) {
-			return `chrg${d.chr}`
+			return `chrg${d.chr}_${d.side}`
 		});
 	g.append("rect").attr("id", function (d) {
-		return `chrrect${d.chr}`
+		return `chrrect${d.chr}_${d.side}`
 	}).attr("class", "chrbox").attr("x", 0).attr("y", 0).attr("rx", 5).attr("ry", 5).attr("height", function (d, i) {
 		return 1 + d.numRows * (segmentHeight + 1)
 	}).style("fill", "white").style("stroke-width", "1").style("stroke", "grey");
@@ -704,7 +723,7 @@ function updateDisplay() {
 
 	var y = 0;
 	for (var i = 0; i < d.length; i++) {
-		var node = d3.select(`#chrsvg${d[i].chr}`);
+		var node = d3.select(`#chrsvg${d[i].chr}_${d[i].side}`);
 		node.attr("y", y);
 		y += 1 + d[i].numRows * (segmentHeight + 1) + 15;
 	}
