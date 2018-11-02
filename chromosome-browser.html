@@ -693,7 +693,7 @@ function updateDisplay() {
 	var chrSvg = chrEnter.append("svg").attr("id", function (d) {
 			return `chrsvg${d.chr}_${d.side}`
 		}).attr("width", "100%");
-	chrSvg.append("text").attr("x", 20).attr("y", 15).attr("class", "chrlabel").attr("font-family", "Verdana").attr("font-size", 15).attr("font-weight", "700").attr("text-anchor", "end").attr("fill", "grey").text(function (d) {
+	chrSvg.append("text").attr("x", 20).attr("y", 10).attr("class", "chrlabel").attr("font-family", "Verdana").attr("font-size", 10).attr("font-weight", "700").attr("text-anchor", "end").attr("fill", "grey").text(function (d) {
 		return d.chr == 23 ? 'X' : `${d.chr}`
 	});
 	var g = chrSvg.append("g").attr("transform", "translate(30)").attr("id", function (d) {
