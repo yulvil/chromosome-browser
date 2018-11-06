@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -170,8 +171,8 @@ nav {
 </div>
 <div class="inputs" id="filters">
 <label for="minCm">Centimorgan size</label>
-from <input id="minCm" type="number" value="10" onChange="updateAll();" onInput="updateAll();">
-to <input id="maxCm" type="number" value="" onChange="updateAll();" onInput="updateAll();">
+from <input id="minCm" type="number" value="10" onChange="updateCm();" onInput="updateCm();">
+to <input id="maxCm" type="number" value="" onChange="updateCm();" onInput="updateCm();">
 
 <br/><br/>
 <label for="includekits">Only show these kits (one per line)</label>
@@ -666,6 +667,26 @@ function getChrBoxWidth(chr, chrsize) {
 	return width;
 }
 
+function updateCm() {
+	let minCm = +document.getElementById("minCm").value || 10;
+	document.getElementById("minCm").value = minCm;
+
+	let maxCm = +document.getElementById("maxCm").value || "";
+	document.getElementById("maxCm").value = maxCm;
+
+	var params = new URLSearchParams(location.search);
+	if (params.has("minCm") || minCm != 10) {
+		params.set("minCm", minCm);
+	}
+	if (params.has("maxCm") || maxCm !== "") {
+		params.set("maxCm", maxCm);
+	}
+
+	window.history.replaceState({}, '', `${location.pathname}?${params}${window.location.hash}`);
+
+	updateAll();
+}
+
 function updateAll() {
 	updateData()
 	updateDisplay()
@@ -877,6 +898,16 @@ function pageLoad() {
 	} else {
 		var params = new URLSearchParams(location.search);
 		urls = params.getAll("url");
+
+		let minCm = +params.get("minCm");
+		if (minCm > 0 && minCm < 200) {
+			document.getElementById("minCm").value = minCm;
+		}
+
+		let maxCm = +params.get("maxCm");
+		if (maxCm > 0 && maxCm < 200) {
+			document.getElementById("maxCm").value = maxCm;
+		}
 	}
 
 	if (urls.length > 0) {
