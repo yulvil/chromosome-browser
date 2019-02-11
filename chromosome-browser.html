@@ -425,7 +425,7 @@ function csvParse(text) {
 		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || currKit;
 
 		e.chr = (d.chr || d.Chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"] || 0);
-		e.chr = e.chr === "X" || e.chr === "x" ? 23 : + ("" + e.chr).replace(/chr/, "");
+		e.chr = e.chr.trim() === "X" || e.chr.trim() === "x" ? 23 : + ("" + e.chr.trim()).replace(/chr/, "");
 		if (e.chr < 1 || e.chr > 23) return;
 
 		e.start =  + (d.start || d.Start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"] || "0").replace(/,/g, "");
