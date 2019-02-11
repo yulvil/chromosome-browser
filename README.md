@@ -21,6 +21,8 @@ Formats supported are
 familytreedna.com segments file format
 ```
 NAME,MATCHNAME,CHROMOSOME,START LOCATION,END LOCATION,CENTIMORGANS,MATCHING SNPS
+or
+Name,Match Name,Chromosome,Start Location,End Location,Centimorgans,Matching SNPs
 ```
 
 myheritage.com segments file format
