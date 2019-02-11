@@ -431,10 +431,8 @@ function csvParse(text) {
 		e.start =  + (d.start || d.Start || d["START LOCATION"] || d["Start Location"] || d["Chromosome Start Point"] || "0").replace(/,/g, "");
 		e.end =  + (d.end || d.End || d["END LOCATION"] || d["End Location"] || d["Chromosome End Point"] || "0").replace(/,/g, "");
 		e.cm =  + (d.cm || d.cM || d["CENTIMORGANS"] || d["Centimorgans"] || d["Genetic Distance"] || "0").replace(/,/g, "");
-		e.kitTo = d.kit2 || d.matchname || d.Match || d["MATCHNAME"] || d["Match name"] || d["Display Name"] || "";
+		e.kitTo = d.kit2 || d.matchname || d.Match || d["MATCHNAME"] || d["Match name"] || d["Match Name"] || d["Display Name"] || "";
 		e.side = getSide(d);
-
-console.log(e);
 
 		if (!kits[e.kitFrom]) {
 			var nameFrom = (d.name1 || d.name || d.NAME || d.Name || "");
