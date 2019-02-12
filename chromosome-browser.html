@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -424,7 +423,7 @@ function csvParse(text) {
 		var e = {};
 		e.kitFrom = d.kit1 || d.name || d.NAME || d.Name || currKit;
 
-		e.chr = (d.chr || d.Chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"] || 0);
+		e.chr = (d.chr || d.Chr || d["CHROMOSOME"] || d["Chromosome"] || d["Chromosome Number"] || "0");
 		e.chr = e.chr.trim() === "X" || e.chr.trim() === "x" ? 23 : + ("" + e.chr.trim()).replace(/chr/, "");
 		if (e.chr < 1 || e.chr > 23) return;
 
