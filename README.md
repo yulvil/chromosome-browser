@@ -9,10 +9,13 @@
 Features
 * Copy/paste your CSV data (gedmatch, familytreedna, myheritage, 23andme)
 * Drag and drop CSV files from your desktop
+* No limits on the number of segments
 * All the rendering is done on the client side. No data sent to servers.
+* No tracking. No Google Analytics.
 * Filter by centimorgan (cM)
 * Include or exclude kits (persons)
 * Different views (compact, by kit, ordered by segment)
+* You can save the webpage to your desktop and use the Chromosome Browser without Internet connection.
 
 ### CSV data formats
 
