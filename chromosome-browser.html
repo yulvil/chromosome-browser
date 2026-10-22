@@ -341,44 +341,37 @@ function sortByKitSize(data) {
 }
 
 function compact(data, fcmp) {
-	var numRows = 1;
-	var d = data.sort(fcmp);
+	// Sort segments by start
+	const d = data.slice().sort(fcmp);
 
-	function overlap(s1, s2) {
-		if (s1.row == s2.row) {
-			if ((s1.start <= s2.start && s2.start <= s1.end) ||
-				(s1.start <= s2.end && s2.end <= s1.end)) {
-				return true;
+	// For each row, track the last segment end
+	const rowEnd = []; // rowEnd[row] = last end coordinate in that row
+
+	for (let i = 0; i < d.length; i++) {
+		const seg = d[i];
+		let assigned = false;
+
+		// Try to place segment in an existing row
+		for (let r = 0; r < rowEnd.length; r++) {
+			if (seg.start > rowEnd[r]) {
+				// No overlap → place here
+				seg.row = r;
+				rowEnd[r] = seg.end;
+				assigned = true;
+				break;
 			}
 		}
-		return false;
-	}
 
-	function overlapPrevious(segments, until) {
-		for (var i = 0; i < until; i++) {
-			if (overlap(segments[i], segments[until])) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	for (var i = 0; i < d.length; i++) {
-		var j = 0;
-		d[i].row = j;
-		while (j < i && overlapPrevious(d, i)) {
-			j++;
-			d[i].row = j;
-
-			if (numRows < j + 1)
-				numRows = j + 1;
+		// If no existing row works, create a new one
+		if (!assigned) {
+			seg.row = rowEnd.length;
+			rowEnd.push(seg.end);
 		}
 	}
 
 	return {
-		"data": d,
-		"numRows": numRows
+		data: d,
+		numRows: rowEnd.length
 	};
 }
 
